@@ -2,10 +2,12 @@ from __future__ import annotations
 import asyncio
 import json
 import sys
+from agentaid.otel import install as install_otel
 from .planner import build_planner_agent, PlannerInput
 
 
 async def _main(research_interest: str, date_from: str, date_to: str) -> None:
+    install_otel()
     agent = build_planner_agent()
     res = await agent.run(PlannerInput(
         research_interest=research_interest,

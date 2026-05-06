@@ -80,4 +80,12 @@ def build_planner_agent() -> Agent[PlannerInput, PlannerResult]:
         summaries = [Summary(paper_id=s["paper_id"], text=s["summary"]) for s in sections]
         return await tools.compose_digest(summaries, ctx.deps.research_interest)
 
+    @agent.system_prompt
+    def _annotate_role(ctx: RunContext[PlannerInput]) -> str:
+        from opentelemetry import trace
+        span = trace.get_current_span()
+        span.set_attribute("agentaid.role", "planner")
+        span.set_attribute("agentaid.agent_name", "arxiv-planner")
+        return ""
+
     return agent

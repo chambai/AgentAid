@@ -56,4 +56,12 @@ def build_worker_agent() -> Agent[WorkerInput, WorkerResult]:
     async def query_paper(ctx: RunContext[WorkerInput], paper_id: str, question: str) -> str:
         return await tools.query_paper(paper_id, question)
 
+    @agent.system_prompt
+    def _annotate_role(ctx: RunContext[WorkerInput]) -> str:
+        from opentelemetry import trace
+        span = trace.get_current_span()
+        span.set_attribute("agentaid.role", "worker")
+        span.set_attribute("agentaid.agent_name", "arxiv-worker")
+        return ""
+
     return agent
