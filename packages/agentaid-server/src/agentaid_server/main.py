@@ -42,6 +42,9 @@ from .api import datasets as datasets_api, regression as regression_api
 app.include_router(datasets_api.router)
 app.include_router(regression_api.router)
 
+from .api import compare as compare_api
+app.include_router(compare_api.router)
+
 @app.get("/healthz")
 async def healthz() -> dict[str, str]:
     return {"status": "ok"}

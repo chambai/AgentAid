@@ -52,3 +52,19 @@ export interface EvalResult {
   rationale: string | null;
   created_at: string;
 }
+
+export interface CompareResult {
+  a: Run;
+  b: Run;
+  tool_distribution: Array<{ tool: string; a_count: number; b_count: number }>;
+  scores: Array<{ eval_name: string; a?: number; b?: number }>;
+}
+
+export interface DatasetSummary { id: string; name: string; description: string | null }
+export interface DatasetRow { id: string; dataset_id: string; input: Record<string, unknown>; expected: Record<string, unknown> }
+export interface DatasetDetail { dataset: DatasetSummary; rows: DatasetRow[] }
+export interface RegressionSummary {
+  id: string; dataset_id: string; prompt_sha: string | null; model: string | null;
+  started_at: string; ended_at: string | null; status: string;
+  summary: Record<string, unknown>;
+}

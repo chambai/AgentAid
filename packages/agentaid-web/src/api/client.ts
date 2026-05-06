@@ -1,4 +1,4 @@
-import type { RunDetail, RunsList, DriftState, EvalResult } from "./types";
+import type { RunDetail, RunsList, DriftState, EvalResult, CompareResult, DatasetSummary, DatasetDetail, RegressionSummary } from "./types";
 
 const BASE = "/api";
 
@@ -27,5 +27,17 @@ export const api = {
     if (params.limit !== undefined) q.set("limit", String(params.limit));
     const qs = q.toString();
     return getJson<{ results: EvalResult[] }>(`/evals/recent${qs ? `?${qs}` : ""}`);
+  },
+  compareRuns: (a: string, b: string): Promise<CompareResult> =>
+    getJson<CompareResult>(`/compare?a=${encodeURIComponent(a)}&b=${encodeURIComponent(b)}`),
+  listDatasets: (): Promise<{ datasets: DatasetSummary[] }> => getJson<{ datasets: DatasetSummary[] }>(`/datasets`),
+  getDataset: (id: string): Promise<DatasetDetail> => getJson<DatasetDetail>(`/datasets/${id}`),
+  listRegressions: (): Promise<{ regressions: RegressionSummary[] }> => getJson<{ regressions: RegressionSummary[] }>(`/regressions`),
+  triggerRegression: async (req: { dataset_id: string; prompt_sha: string; model?: string }) => {
+    const res = await fetch(`${BASE}/regressions`, {
+      method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(req),
+    });
+    if (!res.ok) throw new Error(`${res.status}`);
+    return res.json();
   },
 };
