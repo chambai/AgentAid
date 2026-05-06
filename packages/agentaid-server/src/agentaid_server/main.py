@@ -15,6 +15,9 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], all
 from .api import ingest as ingest_api
 app.include_router(ingest_api.router)
 
+from .api import runs as runs_api
+app.include_router(runs_api.router)
+
 @app.get("/healthz")
 async def healthz() -> dict[str, str]:
     return {"status": "ok"}
