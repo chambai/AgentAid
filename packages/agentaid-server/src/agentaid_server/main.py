@@ -38,6 +38,10 @@ app.include_router(drift_api.router)
 from .api import evals as evals_api
 app.include_router(evals_api.router)
 
+from .api import datasets as datasets_api, regression as regression_api
+app.include_router(datasets_api.router)
+app.include_router(regression_api.router)
+
 @app.get("/healthz")
 async def healthz() -> dict[str, str]:
     return {"status": "ok"}
