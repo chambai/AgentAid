@@ -40,3 +40,15 @@ export interface DriftState {
   is_drifted: boolean;
   updated_at: string;
 }
+
+export type EvalMode = "online" | "regression" | "invariant";
+
+export interface EvalResult {
+  run_id: string;
+  eval_name: string;
+  mode: EvalMode;
+  score: number;
+  label: string | null;
+  rationale: string | null;
+  created_at: string;
+}

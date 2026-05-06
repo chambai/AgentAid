@@ -1,4 +1,4 @@
-import type { RunDetail, RunsList, DriftState } from "./types";
+import type { RunDetail, RunsList, DriftState, EvalResult } from "./types";
 
 const BASE = "/api";
 
@@ -19,4 +19,11 @@ export const api = {
   getRun: (id: string): Promise<RunDetail> => getJson<RunDetail>(`/runs/${id}`),
   driftState: (): Promise<{ signals: DriftState[] }> =>
     getJson<{ signals: DriftState[] }>(`/drift`),
+  evalsRecent: (params: { evalName?: string; limit?: number } = {}): Promise<{ results: EvalResult[] }> => {
+    const q = new URLSearchParams();
+    if (params.evalName) q.set("eval_name", params.evalName);
+    if (params.limit !== undefined) q.set("limit", String(params.limit));
+    const qs = q.toString();
+    return getJson<{ results: EvalResult[] }>(`/evals/recent${qs ? `?${qs}` : ""}`);
+  },
 };
