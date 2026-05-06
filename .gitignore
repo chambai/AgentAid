@@ -3,3 +3,6 @@
 .dolt/
 *.db
 .beads-credential-key
+
+# Brainstorming companion scratch files
+.superpowers/
