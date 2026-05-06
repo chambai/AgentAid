@@ -203,7 +203,7 @@ wheels = [
 [[package]]
 name = "bare-sdk-example"
 version = "0.0.0"
-source = { virtual = "packages/bare-sdk-example" }
+source = { editable = "packages/bare-sdk-example" }
 dependencies = [
     { name = "agentaid" },
     { name = "anthropic" },
