@@ -1,2 +1,2 @@
-from . import ingest, runs, drift
-__all__ = ["ingest", "runs", "drift"]
+from . import ingest, runs, drift, evals
+__all__ = ["ingest", "runs", "drift", "evals"]

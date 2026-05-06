@@ -1,14 +1,15 @@
 from __future__ import annotations
-from fastapi import APIRouter, status
+from fastapi import APIRouter, BackgroundTasks, status
 from sqlmodel import select
 from ..db import engine as _db_engine
 from ..db.models import Run, Span
 from ..ingestion.parser import parse_span, derive_run
+from ..orchestrator import run_invariants, run_online
 
 router = APIRouter()
 
 @router.post("/ingest", status_code=status.HTTP_202_ACCEPTED)
-async def ingest(payload: dict) -> dict[str, int]:
+async def ingest(payload: dict, bg: BackgroundTasks) -> dict[str, int]:
     raw_spans = payload.get("spans", [])
     parsed = [parse_span(r) for r in raw_spans]
 
@@ -45,5 +46,10 @@ async def ingest(payload: dict) -> dict[str, int]:
                     in_db.events = s.events
                     session.add(in_db)
         await session.commit()
+
+    for run_id, spans in by_run.items():
+        if any(sp.parent_span_id is None and sp.ended_at for sp in spans):
+            bg.add_task(run_invariants, run_id)
+            bg.add_task(run_online, run_id)
 
     return {"runs": upserted_runs, "spans": inserted_spans}
