@@ -1,13 +1,27 @@
 from __future__ import annotations
+import asyncio
+import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .db.engine import init_db
+from .orchestrator.drift_workers import drift_loop
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await init_db()
-    yield
+    task = None
+    if os.getenv("AGENTAID_DRIFT_LOOP", "1") != "0":
+        task = asyncio.create_task(drift_loop())
+    try:
+        yield
+    finally:
+        if task is not None:
+            task.cancel()
+            try:
+                await task
+            except (asyncio.CancelledError, Exception):
+                pass
 
 app = FastAPI(title="AgentAid", lifespan=lifespan)
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])

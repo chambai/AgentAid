@@ -16,3 +16,12 @@ async def drift_state() -> dict:
         if key not in latest or r.updated_at > latest[key].updated_at:
             latest[key] = r
     return {"signals": [r.model_dump() for r in latest.values()]}
+
+@router.get("/drift/series/{signal}")
+async def drift_series(signal: str, limit: int = 200) -> dict:
+    async with _db_engine.SessionLocal() as s:
+        rows = (await s.exec(select(DriftStateRow)
+                              .where(DriftStateRow.signal == signal)
+                              .order_by(DriftStateRow.updated_at.desc())
+                              .limit(limit))).all()
+    return {"points": [r.model_dump() for r in reversed(rows)]}
