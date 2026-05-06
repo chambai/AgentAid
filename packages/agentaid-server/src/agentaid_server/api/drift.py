@@ -1,0 +1,18 @@
+from __future__ import annotations
+from fastapi import APIRouter
+from sqlmodel import select
+from ..db import engine as _db_engine
+from ..db.models import DriftStateRow
+
+router = APIRouter()
+
+@router.get("/drift")
+async def drift_state() -> dict:
+    async with _db_engine.SessionLocal() as s:
+        rows = (await s.exec(select(DriftStateRow).order_by(DriftStateRow.updated_at.desc()))).all()
+    latest: dict[tuple[str, str], DriftStateRow] = {}
+    for r in rows:
+        key = (r.signal, r.detector_name)
+        if key not in latest or r.updated_at > latest[key].updated_at:
+            latest[key] = r
+    return {"signals": [r.model_dump() for r in latest.values()]}

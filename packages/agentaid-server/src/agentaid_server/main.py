@@ -18,6 +18,9 @@ app.include_router(ingest_api.router)
 from .api import runs as runs_api
 app.include_router(runs_api.router)
 
+from .api import drift as drift_api
+app.include_router(drift_api.router)
+
 @app.get("/healthz")
 async def healthz() -> dict[str, str]:
     return {"status": "ok"}
