@@ -6,3 +6,24 @@
 
 # Brainstorming companion scratch files
 .superpowers/
+
+# Python
+.venv/
+__pycache__/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# TS / Node
+node_modules/
+packages/*/dist/
+packages/*/.turbo/
+*.tsbuildinfo
+
+# Local SQLite databases
+*.sqlite
+*.sqlite-journal
+agentaid.db

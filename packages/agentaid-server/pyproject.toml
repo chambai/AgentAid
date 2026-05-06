@@ -1,0 +1,23 @@
+[project]
+name = "agentaid-server"
+version = "0.0.0"
+requires-python = ">=3.12"
+dependencies = [
+    "agentaid",
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "sqlmodel>=0.0.22",
+    "aiosqlite>=0.20",
+    "anthropic>=0.40",
+    "pydantic-settings>=2.5",
+]
+
+[tool.uv.sources]
+agentaid = { workspace = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/agentaid_server"]
