@@ -23,6 +23,10 @@ packages/*/dist/
 packages/*/.turbo/
 *.tsbuildinfo
 
+# Prevent tsc from emitting JS alongside TS source files
+packages/agentaid-web/src/**/*.js
+packages/agentaid-web/*.js
+
 # Local SQLite databases
 *.sqlite
 *.sqlite-journal

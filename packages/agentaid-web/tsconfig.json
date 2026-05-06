@@ -12,6 +12,7 @@
     "isolatedModules": true,
     "esModuleInterop": true,
     "allowImportingTsExtensions": false,
+    "noEmit": true,
     "skipLibCheck": true,
     "types": ["vitest/globals", "node"]
   },
