@@ -1,6 +1,7 @@
 from __future__ import annotations
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 from sqlmodel import SQLModel
+from sqlmodel.ext.asyncio.session import AsyncSession
 from ..config import settings
 
 engine = create_async_engine(settings.db_url, echo=False, future=True)

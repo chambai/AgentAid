@@ -12,6 +12,9 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="AgentAid", lifespan=lifespan)
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
+from .api import ingest as ingest_api
+app.include_router(ingest_api.router)
+
 @app.get("/healthz")
 async def healthz() -> dict[str, str]:
     return {"status": "ok"}
