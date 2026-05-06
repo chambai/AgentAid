@@ -1,14 +1,20 @@
 from __future__ import annotations
+
 import asyncio
 import logging
 import random
+
+from agentaid.eval import (
+    registry,
+    templates,  # noqa: F401  -- import triggers registration
+)
+from agentaid.models import EvalMode
+from agentaid.models import Run as RunModel
 from sqlmodel import select
-from agentaid.eval import registry
-from agentaid.eval import templates  # noqa: F401  -- import triggers registration
-from agentaid.models import EvalMode, Run as RunModel
+
 from ..config import settings
 from ..db import engine as _db_engine
-from ..db.models import Run, EvalResult
+from ..db.models import EvalResult, Run
 
 log = logging.getLogger(__name__)
 

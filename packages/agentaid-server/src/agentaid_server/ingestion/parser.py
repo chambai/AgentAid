@@ -1,13 +1,18 @@
 from __future__ import annotations
+
 import json
-from datetime import datetime, timezone
-from agentaid.otel.conventions import GenAI, AgentAid
-from ..db.models import Run, Span as DbSpan
+from datetime import UTC, datetime
+
+from agentaid.otel.conventions import AgentAid, GenAI
+
+from ..db.models import Run
+from ..db.models import Span as DbSpan
+
 
 def _ts_from_nano(nano: int | None) -> datetime | None:
     if nano is None:
         return None
-    return datetime.fromtimestamp(nano / 1e9, tz=timezone.utc).replace(tzinfo=None)
+    return datetime.fromtimestamp(nano / 1e9, tz=UTC).replace(tzinfo=None)
 
 def parse_span(raw: dict) -> DbSpan:
     attrs = dict(raw.get("attributes", {}))

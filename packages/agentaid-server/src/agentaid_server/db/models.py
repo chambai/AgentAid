@@ -1,8 +1,11 @@
 from __future__ import annotations
+
 from datetime import datetime
 from typing import Any
-from sqlmodel import SQLModel, Field
-from sqlalchemy import Column, JSON
+
+from sqlalchemy import JSON, Column
+from sqlmodel import Field, SQLModel
+
 
 class Run(SQLModel, table=True):
     id: str = Field(primary_key=True)

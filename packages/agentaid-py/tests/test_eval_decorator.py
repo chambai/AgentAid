@@ -1,7 +1,10 @@
-import pytest
-from agentaid.eval import eval as agentaid_eval, registry
-from agentaid.models import EvalMode, EvalResult, Run, Golden
 from datetime import datetime
+
+import pytest
+from agentaid.eval import eval as agentaid_eval
+from agentaid.eval import registry
+from agentaid.models import EvalMode, EvalResult, Golden, Run
+
 
 @pytest.mark.asyncio
 async def test_decorator_registers_and_invokes() -> None:

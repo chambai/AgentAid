@@ -2,6 +2,7 @@ import numpy as np
 from agentaid.drift.mmd import MMDDetector
 from agentaid.drift.psi import PSIDetector
 
+
 def test_mmd_does_not_fire_on_same_distribution() -> None:
     rng = np.random.default_rng(0)
     ref = rng.normal(0, 1, size=(50, 8))
@@ -27,15 +28,21 @@ def test_mmd_fires_on_distribution_shift() -> None:
 
 def test_psi_zero_on_identical_distributions() -> None:
     psi = PSIDetector(reference={"a": 50, "b": 30, "c": 20}, threshold=0.1)
-    for _ in range(50): psi.update("a")
-    for _ in range(30): psi.update("b")
-    for _ in range(20): psi.update("c")
+    for _ in range(50):
+        psi.update("a")
+    for _ in range(30):
+        psi.update("b")
+    for _ in range(20):
+        psi.update("c")
     assert not psi.is_drifted()
     assert psi.value() < 0.05
 
 def test_psi_fires_when_distribution_shifts() -> None:
     psi = PSIDetector(reference={"a": 50, "b": 30, "c": 20}, threshold=0.2)
-    for _ in range(10): psi.update("a")
-    for _ in range(10): psi.update("b")
-    for _ in range(80): psi.update("c")
+    for _ in range(10):
+        psi.update("a")
+    for _ in range(10):
+        psi.update("b")
+    for _ in range(80):
+        psi.update("c")
     assert psi.is_drifted()

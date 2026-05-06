@@ -1,11 +1,16 @@
-import pytest
 from datetime import datetime
-from agentaid.models import Run
+
+import pytest
 from agentaid.eval import registry
+from agentaid.models import Run
+
 
 @pytest.fixture(autouse=True)
 def _reload_templates() -> None:
-    """Re-import templates after the autouse registry reset (from conftest) so the 4 are registered for each test."""
+    """Re-import templates after the autouse registry reset (from conftest).
+
+    Ensures the 4 templates are registered for each test.
+    """
     import importlib
     for sub in ("structural_completeness", "cost_within_budget",
                 "relevance_judge", "faithfulness_judge"):

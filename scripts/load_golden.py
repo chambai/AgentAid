@@ -1,5 +1,6 @@
 """Load eval/golden/dataset.json into the AgentAid database."""
 from __future__ import annotations
+
 import asyncio
 import json
 from pathlib import Path
@@ -7,7 +8,7 @@ from pathlib import Path
 GOLDEN = Path(__file__).resolve().parent.parent / "eval" / "golden" / "dataset.json"
 
 async def main() -> None:
-    from agentaid_server.db.engine import init_db, SessionLocal
+    from agentaid_server.db.engine import SessionLocal, init_db
     from agentaid_server.db.models import Dataset, DatasetRow
     from sqlmodel import select
 

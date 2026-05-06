@@ -1,9 +1,12 @@
 from __future__ import annotations
+
 import time
 from urllib.parse import urlencode
-import httpx
+
 import feedparser
-from .mock import PaperSummary, Paper, Figure
+import httpx
+
+from .mock import Figure, Paper, PaperSummary
 
 ARXIV_API = "http://export.arxiv.org/api/query"
 

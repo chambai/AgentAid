@@ -1,7 +1,11 @@
 from __future__ import annotations
+
 import re
-from agentaid.models import EvalMode, EvalResult, Run, Golden
+
+from agentaid.models import EvalMode, EvalResult, Golden, Run
+
 from ..decorator import eval as agentaid_eval
+
 
 @agentaid_eval(name="structural_completeness", mode=EvalMode.INVARIANT)
 async def structural_completeness(run: Run, golden: Golden | None = None) -> EvalResult:

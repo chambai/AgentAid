@@ -1,6 +1,9 @@
 from __future__ import annotations
+
 import os
-from agentaid.models import EvalMode, EvalResult, Run, Golden
+
+from agentaid.models import EvalMode, EvalResult, Golden, Run
+
 from ..decorator import eval as agentaid_eval
 
 DEFAULT_BUDGET = float(os.getenv("AGENTAID_COST_BUDGET_USD", "0.50"))

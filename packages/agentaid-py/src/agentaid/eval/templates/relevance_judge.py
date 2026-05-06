@@ -1,7 +1,10 @@
 from __future__ import annotations
-from agentaid.models import EvalMode, EvalResult, Run, Golden
+
+from agentaid.models import EvalMode, EvalResult, Golden, Run
+
 from ..decorator import eval as agentaid_eval
 from ..judge import llm_judge
+
 
 @agentaid_eval(name="relevance_judge", mode=EvalMode.ONLINE, judge_model="claude-haiku-4-5")
 async def relevance_judge(run: Run, golden: Golden | None = None) -> EvalResult:
@@ -11,9 +14,12 @@ async def relevance_judge(run: Run, golden: Golden | None = None) -> EvalResult:
         return EvalResult(run_id=run.id, eval_name="relevance_judge",
                           mode=EvalMode.ONLINE, score=0.0,
                           label="missing", rationale="input or output not present")
+    instructions = (
+        "Score 0..1 how well the research digest matches the requested research interest. "
+        "Penalize off-topic papers, generic restatements, or thin coverage."
+    )
     return await llm_judge(
-        instructions=("Score 0..1 how well the research digest matches the requested research interest. "
-                      "Penalize off-topic papers, generic restatements, or thin coverage."),
+        instructions=instructions,
         run_input=str(inp),
         run_output=str(out)[:5000],
         model="claude-haiku-4-5",

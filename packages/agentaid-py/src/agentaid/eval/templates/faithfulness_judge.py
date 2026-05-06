@@ -1,8 +1,12 @@
 from __future__ import annotations
+
 import json
-from agentaid.models import EvalMode, EvalResult, Run, Golden
+
+from agentaid.models import EvalMode, EvalResult, Golden, Run
+
 from ..decorator import eval as agentaid_eval
 from ..judge import llm_judge
+
 
 @agentaid_eval(name="faithfulness_judge", mode=EvalMode.ONLINE, judge_model="claude-haiku-4-5")
 async def faithfulness_judge(run: Run, golden: Golden | None = None) -> EvalResult:

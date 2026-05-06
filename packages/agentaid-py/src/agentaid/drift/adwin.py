@@ -1,6 +1,8 @@
 from __future__ import annotations
+
 import math
 from collections import deque
+
 
 class ADWIN:
     """Adaptive Windowing (Bifet & Gavaldà, 2007). One-dimensional change

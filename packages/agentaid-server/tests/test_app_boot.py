@@ -1,6 +1,7 @@
 import pytest
-from httpx import AsyncClient, ASGITransport
 from agentaid_server.main import app
+from httpx import ASGITransport, AsyncClient
+
 
 @pytest.mark.asyncio
 async def test_healthcheck_responds_ok() -> None:
@@ -14,8 +15,12 @@ async def test_healthcheck_responds_ok() -> None:
 async def test_db_tables_exist_on_startup(tmp_path, monkeypatch) -> None:
     db_path = tmp_path / "agentaid_test.sqlite"
     monkeypatch.setenv("AGENTAID_DB_URL", f"sqlite+aiosqlite:///{db_path}")
-    import importlib, agentaid_server.config as cfg, agentaid_server.db.engine as eng
-    importlib.reload(cfg); importlib.reload(eng)
+    import importlib
+
+    import agentaid_server.config as cfg
+    import agentaid_server.db.engine as eng
+    importlib.reload(cfg)
+    importlib.reload(eng)
     from agentaid_server.db.engine import init_db
     await init_db()
     import sqlite3

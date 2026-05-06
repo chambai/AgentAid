@@ -1,4 +1,4 @@
-from .conventions import GenAI, AgentAid
+from .conventions import AgentAid, GenAI
 from .exporter import AgentAidSpanExporter
 from .setup import install
 

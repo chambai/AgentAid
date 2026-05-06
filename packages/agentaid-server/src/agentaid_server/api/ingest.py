@@ -1,9 +1,11 @@
 from __future__ import annotations
+
 from fastapi import APIRouter, BackgroundTasks, status
 from sqlmodel import select
+
 from ..db import engine as _db_engine
 from ..db.models import Run, Span
-from ..ingestion.parser import parse_span, derive_run
+from ..ingestion.parser import derive_run, parse_span
 from ..orchestrator import run_invariants, run_online
 
 router = APIRouter()

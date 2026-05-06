@@ -1,6 +1,8 @@
-import pytest
 from typing import Any
+
+import pytest
 from arxiv_agent import planner
+
 
 class _CaptureExporter:
     def __init__(self) -> None:

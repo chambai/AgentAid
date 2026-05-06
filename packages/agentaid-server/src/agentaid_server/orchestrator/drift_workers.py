@@ -1,11 +1,15 @@
 from __future__ import annotations
+
 import asyncio
 import logging
+
 import numpy as np
-from sqlmodel import select
 from agentaid.drift import ADWIN, MMDDetector, PSIDetector
+from sqlmodel import select
+
 from ..db import engine as _db_engine
-from ..db.models import EvalResult, Span, DriftStateRow, Run as RunRow
+from ..db.models import DriftStateRow, EvalResult, Span
+from ..db.models import Run as RunRow
 
 log = logging.getLogger(__name__)
 

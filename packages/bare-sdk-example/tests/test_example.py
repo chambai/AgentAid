@@ -1,5 +1,6 @@
 import pytest
 
+
 def test_module_imports() -> None:
     """Smoke check that the example module is importable (no syntax errors,
     all imports resolve). Doesn't run the agent."""

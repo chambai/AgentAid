@@ -1,10 +1,12 @@
-import pytest
-from unittest.mock import AsyncMock, patch
 from datetime import datetime
+from unittest.mock import AsyncMock, patch
+
+import pytest
 from agentaid.otel.exporter import AgentAidSpanExporter, _serialize_span
 from opentelemetry.sdk.trace import ReadableSpan
 from opentelemetry.trace import SpanContext, TraceFlags
 from opentelemetry.trace.span import format_span_id, format_trace_id
+
 
 def _make_readable_span() -> ReadableSpan:
     ctx = SpanContext(trace_id=0x12345678901234567890123456789012,
@@ -33,7 +35,8 @@ def test_serialize_span_emits_genai_attributes() -> None:
 async def test_exporter_posts_to_endpoint() -> None:
     span = _make_readable_span()
     exporter = AgentAidSpanExporter(endpoint="http://localhost:8000/ingest")
-    with patch("httpx.AsyncClient.post", new=AsyncMock(return_value=type("R", (), {"status_code": 200})())) as p:
+    fake_response = type("R", (), {"status_code": 200})()
+    with patch("httpx.AsyncClient.post", new=AsyncMock(return_value=fake_response)) as p:
         result = exporter.export([span])
         await exporter._flush()
     assert result.name == "SUCCESS"

@@ -1,5 +1,6 @@
 from agentaid_server.orchestrator.regression import score_against_expected
 
+
 def test_score_against_expected_rewards_overlap() -> None:
     expected = {"expected_paper_ids": ["2401.00001", "2402.00012"],
                 "expected_themes": ["concept drift", "Hoeffding bound"]}

@@ -1,12 +1,15 @@
 from __future__ import annotations
+
 import logging
 import re
 import uuid
 from dataclasses import dataclass
 from datetime import datetime
+
 from sqlmodel import select
+
 from ..db import engine as _db_engine
-from ..db.models import Dataset, DatasetRow, RegressionRun
+from ..db.models import DatasetRow, RegressionRun
 
 log = logging.getLogger(__name__)
 
@@ -35,7 +38,7 @@ def score_against_expected(expected: dict,
 
 async def run_regression(dataset_id: str, prompt_sha: str, model: str) -> str:
     """Drive the agent across a dataset and aggregate results."""
-    from arxiv_agent.planner import build_planner_agent, PlannerInput
+    from arxiv_agent.planner import PlannerInput, build_planner_agent
 
     rid = f"reg-{uuid.uuid4().hex[:12]}"
     started = datetime.utcnow()

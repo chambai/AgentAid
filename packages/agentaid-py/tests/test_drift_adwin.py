@@ -1,5 +1,7 @@
 import random
+
 from agentaid.drift.adwin import ADWIN
+
 
 def test_adwin_does_not_fire_on_stationary_stream() -> None:
     random.seed(0)

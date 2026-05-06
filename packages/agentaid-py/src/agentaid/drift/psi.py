@@ -1,6 +1,8 @@
 from __future__ import annotations
+
 import math
 from collections import Counter, deque
+
 
 class PSIDetector:
     """Population Stability Index over a sliding window of categorical values.

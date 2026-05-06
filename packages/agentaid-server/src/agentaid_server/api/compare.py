@@ -1,9 +1,12 @@
 from __future__ import annotations
+
 from collections import Counter
+
 from fastapi import APIRouter, HTTPException
 from sqlmodel import select
+
 from ..db import engine as _db_engine
-from ..db.models import Run, Span, EvalResult
+from ..db.models import EvalResult, Run, Span
 
 router = APIRouter()
 

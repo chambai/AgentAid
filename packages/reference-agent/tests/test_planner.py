@@ -1,9 +1,10 @@
 import pytest
-from arxiv_agent.planner import build_planner_agent, PlannerInput, PlannerResult
+from arxiv_agent.planner import PlannerInput, PlannerResult, build_planner_agent
+
 
 def test_planner_input_validates() -> None:
     PlannerInput(research_interest="concept drift", date_from="2024-01-01", date_to="2024-12-31")
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError):
         PlannerInput(research_interest="", date_from="2024-01-01", date_to="2024-12-31")
 
 @pytest.mark.live

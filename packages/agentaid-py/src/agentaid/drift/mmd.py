@@ -1,7 +1,10 @@
 from __future__ import annotations
+
 from collections import deque
+
 import numpy as np
 from numpy.typing import NDArray
+
 
 class MMDDetector:
     """Maximum Mean Discrepancy with an RBF kernel.

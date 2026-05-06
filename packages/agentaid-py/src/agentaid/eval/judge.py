@@ -1,7 +1,10 @@
 from __future__ import annotations
+
 import json
+
 from anthropic import AsyncAnthropic
-from agentaid.models import EvalResult, EvalMode
+
+from agentaid.models import EvalMode, EvalResult
 
 _client: AsyncAnthropic | None = None
 

@@ -1,19 +1,19 @@
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
-class EvalMode(str, Enum):
+class EvalMode(StrEnum):
     ONLINE = "online"
     REGRESSION = "regression"
     INVARIANT = "invariant"
 
 
-class DriftSignal(str, Enum):
+class DriftSignal(StrEnum):
     INPUT = "input"
     TOOL_CALL = "tool_call"
     QUALITY = "quality"

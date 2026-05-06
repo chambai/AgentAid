@@ -1,12 +1,20 @@
-import pytest
 from datetime import datetime
-from httpx import AsyncClient, ASGITransport
+
+import pytest
+from httpx import ASGITransport, AsyncClient
+
 
 @pytest.fixture
 async def app_with_data(tmp_path, monkeypatch):
     monkeypatch.setenv("AGENTAID_DB_URL", f"sqlite+aiosqlite:///{tmp_path/'r.db'}")
-    import importlib, agentaid_server.config as cfg, agentaid_server.db.engine as eng, agentaid_server.main as mn
-    importlib.reload(cfg); importlib.reload(eng); importlib.reload(mn)
+    import importlib
+
+    import agentaid_server.config as cfg
+    import agentaid_server.db.engine as eng
+    import agentaid_server.main as mn
+    importlib.reload(cfg)
+    importlib.reload(eng)
+    importlib.reload(mn)
     from agentaid_server.db.engine import SessionLocal, init_db
     from agentaid_server.db.models import Run, Span
     await init_db()

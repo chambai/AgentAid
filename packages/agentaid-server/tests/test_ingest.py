@@ -1,8 +1,10 @@
-import pytest
 from datetime import datetime
-from httpx import AsyncClient, ASGITransport
-from sqlmodel import select
+
+import pytest
 from agentaid_server.db.models import Run, Span
+from httpx import ASGITransport, AsyncClient
+from sqlmodel import select
+
 
 def _ns(dt: datetime) -> int:
     return int(dt.timestamp() * 1e9)
@@ -10,10 +12,16 @@ def _ns(dt: datetime) -> int:
 @pytest.mark.asyncio
 async def test_ingest_creates_run_and_spans(tmp_path, monkeypatch) -> None:
     monkeypatch.setenv("AGENTAID_DB_URL", f"sqlite+aiosqlite:///{tmp_path/'t.db'}")
-    import importlib, agentaid_server.config as cfg, agentaid_server.db.engine as eng, agentaid_server.main as mn
-    importlib.reload(cfg); importlib.reload(eng); importlib.reload(mn)
-    from agentaid_server.main import app as fresh_app
+    import importlib
+
+    import agentaid_server.config as cfg
+    import agentaid_server.db.engine as eng
+    import agentaid_server.main as mn
+    importlib.reload(cfg)
+    importlib.reload(eng)
+    importlib.reload(mn)
     from agentaid_server.db.engine import SessionLocal, init_db
+    from agentaid_server.main import app as fresh_app
     await init_db()
 
     payload = {

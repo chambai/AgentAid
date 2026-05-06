@@ -1,6 +1,7 @@
-import pytest
 from datetime import datetime
-from agentaid.models import Run, Span, EvalResult, EvalMode, DriftState, DriftSignal
+
+import pytest
+from agentaid.models import DriftSignal, EvalMode, EvalResult, Run
 
 
 def test_run_round_trips() -> None:
@@ -12,7 +13,7 @@ def test_run_round_trips() -> None:
 
 def test_eval_result_unit_interval_score() -> None:
     EvalResult(run_id="r", eval_name="x", mode=EvalMode.ONLINE, score=0.5)
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError):
         EvalResult(run_id="r", eval_name="x", mode=EvalMode.ONLINE, score=1.5)
 
 

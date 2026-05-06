@@ -1,7 +1,9 @@
 from __future__ import annotations
+
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
-from typing import Awaitable, Callable
-from agentaid.models import EvalMode, EvalResult, Run, Golden
+
+from agentaid.models import EvalMode, EvalResult, Golden, Run
 
 EvalFn = Callable[[Run, Golden | None], Awaitable[EvalResult]]
 

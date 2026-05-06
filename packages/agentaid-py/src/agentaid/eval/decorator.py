@@ -1,6 +1,9 @@
 from __future__ import annotations
+
 from agentaid.models import EvalMode
+
 from .registry import EvalFn, EvalSpec, register
+
 
 def eval(*, name: str, mode: EvalMode, judge_model: str | None = None):
     def decorator(fn: EvalFn) -> EvalFn:

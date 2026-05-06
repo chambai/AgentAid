@@ -1,5 +1,7 @@
 from __future__ import annotations
+
 from enum import StrEnum
+
 
 class GenAI(StrEnum):
     SYSTEM = "gen_ai.system"

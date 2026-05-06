@@ -1,7 +1,9 @@
 from __future__ import annotations
+
 import asyncio
 import logging
-from typing import Sequence
+from collections.abc import Sequence
+
 import httpx
 from opentelemetry.sdk.trace import ReadableSpan
 from opentelemetry.sdk.trace.export import SpanExporter, SpanExportResult
@@ -32,7 +34,9 @@ def _serialize_span(span: ReadableSpan) -> dict:
 
 class AgentAidSpanExporter(SpanExporter):
     """OTel exporter that POSTs serialized spans to the AgentAid server."""
-    def __init__(self, endpoint: str = "http://localhost:8000/ingest", timeout: float = 5.0) -> None:
+    def __init__(
+        self, endpoint: str = "http://localhost:8000/ingest", timeout: float = 5.0
+    ) -> None:
         self.endpoint = endpoint
         self.timeout = timeout
         self._client = httpx.AsyncClient(timeout=timeout)

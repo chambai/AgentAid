@@ -1,5 +1,6 @@
 import pytest
 
+
 @pytest.fixture(autouse=True)
 def _reset_eval_registry() -> None:
     """Reset the eval registry before every test in agentaid-py to avoid cross-test bleed."""

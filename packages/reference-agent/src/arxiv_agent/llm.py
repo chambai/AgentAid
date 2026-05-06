@@ -1,7 +1,9 @@
 from __future__ import annotations
+
 import base64
 import json
 import os
+
 from anthropic import AsyncAnthropic
 
 _client: AsyncAnthropic | None = None
@@ -35,7 +37,10 @@ async def vision(prompt: str, image_bytes: bytes, content_type: str = "image/jpe
                  *, model: str = CHEAP, max_tokens: int = 512) -> str:
     image_b64 = base64.standard_b64encode(image_bytes).decode("ascii")
     content = [
-        {"type": "image", "source": {"type": "base64", "media_type": content_type, "data": image_b64}},
+        {
+            "type": "image",
+            "source": {"type": "base64", "media_type": content_type, "data": image_b64},
+        },
         {"type": "text", "text": prompt},
     ]
     msg = await _get().messages.create(

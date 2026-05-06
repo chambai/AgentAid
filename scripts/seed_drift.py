@@ -9,6 +9,7 @@ Produces 100 synthetic runs across two epochs (0..49 stable, 50..99 shifted),
 next worker tick.
 """
 from __future__ import annotations
+
 import argparse
 import asyncio
 import os
@@ -28,11 +29,13 @@ async def seed(db_url: str | None) -> None:
         os.environ["AGENTAID_DB_URL"] = db_url
     # Import after env is set so engine binds correctly.
     import importlib
+
     import agentaid_server.config as cfg
     import agentaid_server.db.engine as eng
-    importlib.reload(cfg); importlib.reload(eng)
-    from agentaid_server.db.engine import init_db, SessionLocal
-    from agentaid_server.db.models import Run, Span, EvalResult
+    importlib.reload(cfg)
+    importlib.reload(eng)
+    from agentaid_server.db.engine import SessionLocal, init_db
+    from agentaid_server.db.models import EvalResult, Run, Span
 
     await init_db()
     base = datetime.utcnow() - timedelta(days=2)

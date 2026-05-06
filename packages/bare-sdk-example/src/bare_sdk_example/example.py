@@ -5,14 +5,16 @@ Demonstrates: drop-in instrumentation with no agent framework; tool use via
 the Anthropic messages API; AgentAid run/role/agent_name attributes.
 """
 from __future__ import annotations
+
 import asyncio
 import json
 import uuid
 from typing import Any
+
+from agentaid.otel import install as install_otel
+from agentaid.otel.conventions import AgentAid, GenAI
 from anthropic import AsyncAnthropic
 from opentelemetry import trace
-from agentaid.otel import install as install_otel
-from agentaid.otel.conventions import GenAI, AgentAid
 
 TOOLS = [
     {
@@ -47,7 +49,9 @@ async def run(research_interest: str) -> str:
         root.set_attribute(AgentAid.INPUT, json.dumps({"research_interest": research_interest}))
 
         messages: list[dict[str, Any]] = [
-            {"role": "user", "content": f"Find 1-2 papers on: {research_interest}. Use the search_arxiv tool."}
+            {"role": "user", "content": (
+                f"Find 1-2 papers on: {research_interest}. Use the search_arxiv tool."
+            )}
         ]
         for _ in range(3):
             with tracer.start_as_current_span("model.call") as cs:
@@ -70,7 +74,9 @@ async def run(research_interest: str) -> str:
                         ts.set_attribute(AgentAid.ROLE, "tool")
                         ts.set_attribute(GenAI.TOOL_NAME, tu.name)
                         out = _tool_dispatch(tu.name, dict(tu.input or {}))
-                        tool_results.append({"type": "tool_result", "tool_use_id": tu.id, "content": out})
+                        tool_results.append({
+                            "type": "tool_result", "tool_use_id": tu.id, "content": out,
+                        })
                 messages.append({"role": "assistant", "content": resp.content})
                 messages.append({"role": "user", "content": tool_results})
             else:

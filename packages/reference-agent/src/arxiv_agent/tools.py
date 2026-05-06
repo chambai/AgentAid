@@ -1,9 +1,11 @@
 from __future__ import annotations
+
 import json as _json
 from dataclasses import dataclass
-from .mock_arxiv.client import get_arxiv_client
-from .mock_arxiv.mock import PaperSummary, Paper
+
 from . import llm
+from .mock_arxiv.client import get_arxiv_client
+from .mock_arxiv.mock import Paper, PaperSummary
 
 
 @dataclass(frozen=True)
@@ -33,8 +35,10 @@ async def _llm_json(prompt: str) -> str:
     return raw[start:end + 1] if start != -1 and end != -1 else raw
 
 
-async def search_arxiv(query: str, limit: int = 10,
-                       date_from: str | None = None, date_to: str | None = None) -> list[PaperSummary]:
+async def search_arxiv(
+    query: str, limit: int = 10,
+    date_from: str | None = None, date_to: str | None = None,
+) -> list[PaperSummary]:
     return get_arxiv_client().search(query, limit=limit, date_from=date_from, date_to=date_to)
 
 

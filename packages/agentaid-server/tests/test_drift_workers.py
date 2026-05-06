@@ -1,16 +1,22 @@
-import pytest
 from datetime import datetime
+
+import pytest
 from sqlmodel import select
+
 
 @pytest.mark.asyncio
 async def test_quality_drift_tick_writes_state(tmp_path, monkeypatch) -> None:
     monkeypatch.setenv("AGENTAID_DB_URL", f"sqlite+aiosqlite:///{tmp_path/'d.db'}")
-    import importlib, agentaid_server.config as cfg, agentaid_server.db.engine as eng
-    importlib.reload(cfg); importlib.reload(eng)
-    from agentaid_server.db.engine import SessionLocal, init_db
-    from agentaid_server.db.models import EvalResult, DriftStateRow
+    import importlib
+
+    import agentaid_server.config as cfg
+    import agentaid_server.db.engine as eng
+    importlib.reload(cfg)
+    importlib.reload(eng)
     # Reload drift_workers AFTER engine reload so it picks up new SessionLocal binding.
     import agentaid_server.orchestrator.drift_workers as dw
+    from agentaid_server.db.engine import SessionLocal, init_db
+    from agentaid_server.db.models import DriftStateRow, EvalResult
     importlib.reload(dw)
     # Reset module-level detector singletons
     dw._quality_detectors.clear()

@@ -1,5 +1,6 @@
 import pytest
-from arxiv_agent.worker import build_worker_agent, WorkerInput, WorkerResult
+from arxiv_agent.worker import WorkerInput, WorkerResult, build_worker_agent
+
 
 @pytest.mark.live
 async def test_worker_processes_known_paper() -> None:
@@ -14,5 +15,5 @@ async def test_worker_processes_known_paper() -> None:
     assert len(res.output.figure_descriptions) >= 1
 
 def test_worker_input_model_validates() -> None:
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError):
         WorkerInput(paper_id="", research_interest="x")

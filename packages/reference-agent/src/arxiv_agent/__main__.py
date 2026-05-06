@@ -1,9 +1,12 @@
 from __future__ import annotations
+
 import asyncio
 import json
 import sys
+
 from agentaid.otel import install as install_otel
-from .planner import build_planner_agent, PlannerInput
+
+from .planner import PlannerInput, build_planner_agent
 
 
 async def _main(research_interest: str, date_from: str, date_to: str) -> None:

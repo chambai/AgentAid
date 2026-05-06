@@ -30,7 +30,9 @@ async def test_extract_figures_returns_descriptions() -> None:
 
 
 @pytest.mark.asyncio
-async def test_score_candidate_returns_float_in_unit_interval(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_score_candidate_returns_float_in_unit_interval(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     async def fake_score(prompt: str) -> str:
         return '{"score": 0.78, "rationale": "highly on-topic"}'
     monkeypatch.setattr("arxiv_agent.tools._llm_json", fake_score)
