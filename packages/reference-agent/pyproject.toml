@@ -22,3 +22,9 @@ packages = ["src/arxiv_agent"]
 
 [tool.hatch.build.targets.wheel.force-include]
 "src/arxiv_agent/mock_arxiv/data" = "arxiv_agent/mock_arxiv/data"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+markers = [
+    "live: tests that hit real LLM/external APIs (excluded by default in CI)",
+]
