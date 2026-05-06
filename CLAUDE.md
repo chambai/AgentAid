@@ -67,3 +67,14 @@ _Add a brief overview of your project architecture_
 ## Conventions & Patterns
 
 _Add your project-specific conventions here_
+Use 'bd' for task tracking
+
+## Git commit conventions
+
+- Do not add the "🤖 Generated with Claude Code" line to commit messages.
+- Do not add the "Co-Authored-By: Claude <noreply@anthropic.com>" trailer.
+- Write commit messages in a terse, human style. Imperative mood, lowercase
+  subject line where it fits naturally, no marketing voice, no excessive
+  bullet points in the body.
+- Subject line under 72 characters. Body only when it adds something the
+  subject doesn't.
