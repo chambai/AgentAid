@@ -5,7 +5,9 @@
 > patterns, and eval scores — is a first-class signal that traces and metrics
 > alone don't surface.
 
-[▶ 5-minute walkthrough video](https://youtu.be/PLACEHOLDER) <!-- linked in Task 32 once recorded -->
+![Walkthrough](docs/walkthrough.gif)
+
+*Full-resolution recording: [`docs/walkthrough.mp4`](docs/walkthrough.mp4)*
 
 ![Drift home](docs/screenshots/01-drift-home.png)
 

@@ -12,4 +12,13 @@ Run `uv run python scripts/run_demo.py` in a hidden terminal before recording.
 | 6 | 3:45–4:25 | **Framework-agnostic** | Terminal: run bare-Anthropic-SDK example. Refresh `/runs` — `bare-…` id appears. |
 | 7 | 4:25–4:40 | **Close** | "Github at <url>; design + plan in `docs/superpowers/`." |
 
-Upload to YouTube as **Unlisted**. Replace `https://youtu.be/PLACEHOLDER` in `README.md` with the real URL when done.
+## After recording
+
+1. Save the recording as `docs/walkthrough.mp4` at the repo root.
+2. Generate a GIF for the README hero: `bash scripts/make_gif.sh`.
+   - The script produces `docs/walkthrough.gif` (~5–10 MB target).
+   - For a leaner GIF, edit a 30–60 s "highlight reel" first
+     (`docs/walkthrough.mp4` → `docs/walkthrough-highlights.mp4`) and
+     point the script at that.
+3. Commit both files. GitHub renders GIFs inline and offers MP4 as a
+   download — no external hosting needed.
