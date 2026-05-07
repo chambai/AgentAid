@@ -11,6 +11,7 @@ from agentaid.otel.conventions import AgentAid
 from opentelemetry import trace
 from opentelemetry.trace import StatusCode
 
+from . import tools as agent_tools
 from .planner import PlannerInput, build_planner_agent, figures_ctx
 
 
@@ -42,11 +43,14 @@ async def _main(research_interest: str, date_from: str, date_to: str) -> None:
             f"Date window: {date_from} to {date_to}\n"
             "Produce the digest now."
         )
-        # Set a fresh dict in the contextvar so dispatch_worker calls inside
-        # this run accumulate into it. Critical: ContextVar defaults are
-        # evaluated once at module import; without a per-run set() the same
-        # dict would be shared across runs.
+        # Reset both figure side-channels for this run. The contextvar in
+        # planner.py records what the LLM threaded through PlannerResult /
+        # WorkerResult; agent_tools.reset_run_figures() clears the
+        # lower-level side-channel that captures figures the moment
+        # tools.extract_figures() runs (the reliable path — bypasses the
+        # LLM entirely).
         figures_token = figures_ctx.set({})
+        agent_tools.reset_run_figures()
         try:
             try:
                 res = await agent.run(user_prompt, deps=deps)
@@ -69,16 +73,23 @@ async def _main(research_interest: str, date_from: str, date_to: str) -> None:
                       file=sys.stderr)
                 raise SystemExit(1)
 
-            # Merge LLM-populated figures (best-effort) with the side-channel
-            # accumulator (deterministic). The side channel wins on duplicate
-            # paper ids — it has the actual filenames, the LLM may have
-            # paraphrased.
+            # Merge from three sources, in increasing-trust order:
+            #   1. LLM-populated PlannerResult.figures (often empty)
+            #   2. planner-level contextvar populated from dispatch_worker
+            #      using WorkerResult.figure_descriptions (also LLM-driven,
+            #      also unreliable)
+            #   3. tools-level side-channel populated when tools.extract_figures
+            #      actually fires (deterministic — no LLM trust required)
+            # Source #3 wins on duplicate paper_ids because it carries the
+            # actual filename pulled from the mock arXiv corpus rather than a
+            # potentially-paraphrased LLM rendition.
             llm_figures = {
                 pid: [f.model_dump() for f in figs]
                 for pid, figs in res.output.figures.items()
             }
-            captured_figures = figures_ctx.get()
-            merged_figures = {**llm_figures, **captured_figures}
+            ctx_figures = figures_ctx.get()
+            tool_figures = agent_tools.get_run_figures()
+            merged_figures = {**llm_figures, **ctx_figures, **tool_figures}
 
             root.set_attribute(
                 AgentAid.OUTPUT,

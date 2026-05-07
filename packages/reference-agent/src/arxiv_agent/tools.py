@@ -29,6 +29,36 @@ class Summary:
     text: str
 
 
+# ---------------------------------------------------------------------------
+# Run-scoped figure side-channel.
+#
+# The agent's planner/worker stack is supposed to thread figure data through
+# WorkerResult.figure_descriptions and PlannerResult.figures, but the LLM is
+# unreliable at it (figures are deterministic data, not a judgment call).
+# Anything that calls extract_figures() below records the figures into this
+# module-level dict, keyed by paper_id. __main__.py resets the dict at the
+# start of each run and reads it at the end, then merges with whatever the
+# LLM did populate. Because this is the lowest-level data tap (the plain
+# async function that *every* layer above eventually delegates to), we can't
+# miss figures regardless of how the agent loop chooses to surface them.
+#
+# Single-tenant dev: a module-level dict is fine. For concurrent runs in a
+# multi-tenant deployment, the equivalent should be a per-run keyed store
+# (e.g., keyed off agentaid.run_id from the OTel context).
+# ---------------------------------------------------------------------------
+_RUN_FIGURES: dict[str, list[dict]] = {}
+
+
+def reset_run_figures() -> None:
+    """Clear the run-scoped figure side-channel. Call before each agent run."""
+    _RUN_FIGURES.clear()
+
+
+def get_run_figures() -> dict[str, list[dict]]:
+    """Read the figures captured during this run, keyed by paper_id."""
+    return dict(_RUN_FIGURES)
+
+
 # Internal indirection so tests can monkeypatch.
 async def _llm_json(prompt: str) -> str:
     raw = await llm.text(prompt + "\n\nRespond with a single valid JSON object, no prose.")
@@ -75,6 +105,13 @@ async def extract_figures(paper_id: str) -> list[FigureDescription]:
             f.data, content_type=f.content_type,
         )
         out.append(FigureDescription(paper_id=paper_id, caption=f.caption, description=desc, filename=f.filename))
+    # Record into the run-scoped side-channel. Whatever the agent loop
+    # decides to do with the returned list, the figures still land in
+    # _RUN_FIGURES and __main__.py picks them up at the end of the run.
+    _RUN_FIGURES[paper_id] = [
+        {"caption": d.caption, "description": d.description, "filename": d.filename}
+        for d in out
+    ]
     return out
 
 
