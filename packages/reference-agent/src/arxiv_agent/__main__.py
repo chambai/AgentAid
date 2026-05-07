@@ -46,6 +46,7 @@ async def _main(research_interest: str, date_from: str, date_to: str) -> None:
             AgentAid.OUTPUT,
             json.dumps({
                 "digest": res.output.digest,
+                "candidates": [c.model_dump() for c in res.output.candidates],
                 "sections": [s.model_dump() for s in res.output.sections],
             }),
         )
