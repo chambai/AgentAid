@@ -1,7 +1,6 @@
 from datetime import datetime
-from unittest.mock import AsyncMock, patch
+from unittest.mock import MagicMock, patch
 
-import pytest
 from agentaid.otel.exporter import AgentAidSpanExporter, _serialize_span
 from opentelemetry.sdk.trace import ReadableSpan
 from opentelemetry.trace import SpanContext, TraceFlags
@@ -31,16 +30,14 @@ def test_serialize_span_emits_genai_attributes() -> None:
     assert payload["span_id"] == format_span_id(0xabcdef0123456789)
     assert payload["trace_id"] == format_trace_id(0x12345678901234567890123456789012)
 
-@pytest.mark.asyncio
-async def test_exporter_posts_to_endpoint() -> None:
+def test_exporter_posts_to_endpoint() -> None:
     span = _make_readable_span()
     exporter = AgentAidSpanExporter(endpoint="http://localhost:8000/ingest")
-    fake_response = type("R", (), {"status_code": 200})()
-    with patch("httpx.AsyncClient.post", new=AsyncMock(return_value=fake_response)) as p:
+    fake_response = MagicMock(status_code=200)
+    with patch.object(exporter._client, "post", return_value=fake_response) as p:
         result = exporter.export([span])
-        await exporter._flush()
     assert result.name == "SUCCESS"
-    p.assert_called()
+    p.assert_called_once()
     body = p.call_args.kwargs["json"]
     assert "spans" in body
     assert body["spans"][0]["attributes"]["gen_ai.system"] == "anthropic"

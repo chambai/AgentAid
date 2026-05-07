@@ -70,10 +70,15 @@ def build_planner_agent() -> Agent[PlannerInput, PlannerResult]:
 
     @agent.tool
     async def dispatch_worker(ctx: RunContext[PlannerInput], paper_id: str) -> dict:
-        res = await worker.run(WorkerInput(
+        worker_deps = WorkerInput(
             paper_id=paper_id,
             research_interest=ctx.deps.research_interest,
-        ))
+        )
+        worker_prompt = (
+            f"Deep-read paper {paper_id} for research interest: "
+            f"{ctx.deps.research_interest}. Return the WorkerResult."
+        )
+        res = await worker.run(worker_prompt, deps=worker_deps)
         return {"paper_id": res.output.paper_id, "summary": res.output.summary}
 
     @agent.tool
@@ -82,13 +87,5 @@ def build_planner_agent() -> Agent[PlannerInput, PlannerResult]:
         from .tools import Summary
         summaries = [Summary(paper_id=s["paper_id"], text=s["summary"]) for s in sections]
         return await tools.compose_digest(summaries, ctx.deps.research_interest)
-
-    @agent.system_prompt
-    def _annotate_role(ctx: RunContext[PlannerInput]) -> str:
-        from opentelemetry import trace
-        span = trace.get_current_span()
-        span.set_attribute("agentaid.role", "planner")
-        span.set_attribute("agentaid.agent_name", "arxiv-planner")
-        return ""
 
     return agent

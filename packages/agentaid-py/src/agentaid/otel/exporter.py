@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import asyncio
 import logging
 from collections.abc import Sequence
 
@@ -10,6 +9,7 @@ from opentelemetry.sdk.trace.export import SpanExporter, SpanExportResult
 from opentelemetry.trace.span import format_span_id, format_trace_id
 
 log = logging.getLogger(__name__)
+
 
 def _serialize_span(span: ReadableSpan) -> dict:
     ctx = span.get_span_context()
@@ -32,41 +32,37 @@ def _serialize_span(span: ReadableSpan) -> dict:
                    "description": span.status.description or ""},
     }
 
+
 class AgentAidSpanExporter(SpanExporter):
-    """OTel exporter that POSTs serialized spans to the AgentAid server."""
+    """OTel exporter that POSTs serialized spans to the AgentAid server.
+
+    BatchSpanProcessor calls export() from a dedicated worker thread, so a
+    synchronous HTTP client is correct here — it avoids the event-loop
+    coordination issues that an async client would introduce when the host
+    process is itself running asyncio (and would otherwise cause spans to
+    be lost on process exit).
+    """
+
     def __init__(
         self, endpoint: str = "http://localhost:8000/ingest", timeout: float = 5.0
     ) -> None:
         self.endpoint = endpoint
         self.timeout = timeout
-        self._client = httpx.AsyncClient(timeout=timeout)
-        self._pending: list[asyncio.Task] = []
+        self._client = httpx.Client(timeout=timeout)
 
     def export(self, spans: Sequence[ReadableSpan]) -> SpanExportResult:
+        if not spans:
+            return SpanExportResult.SUCCESS
         payload = {"spans": [_serialize_span(s) for s in spans]}
         try:
-            loop = asyncio.get_event_loop()
-        except RuntimeError:
-            loop = asyncio.new_event_loop()
-        if loop.is_running():
-            self._pending.append(loop.create_task(self._post(payload)))
-        else:
-            loop.run_until_complete(self._post(payload))
-        return SpanExportResult.SUCCESS
-
-    async def _post(self, payload: dict) -> None:
-        try:
-            await self._client.post(self.endpoint, json=payload)
+            self._client.post(self.endpoint, json=payload)
+            return SpanExportResult.SUCCESS
         except Exception:
             log.warning("agentaid exporter failed", exc_info=True)
-
-    async def _flush(self) -> None:
-        if self._pending:
-            await asyncio.gather(*self._pending, return_exceptions=True)
-            self._pending.clear()
+            return SpanExportResult.FAILURE
 
     def shutdown(self) -> None:
         try:
-            asyncio.get_event_loop().run_until_complete(self._client.aclose())
+            self._client.close()
         except Exception:
             pass

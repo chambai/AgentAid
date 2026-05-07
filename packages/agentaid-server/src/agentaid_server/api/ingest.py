@@ -15,11 +15,32 @@ async def ingest(payload: dict, bg: BackgroundTasks) -> dict[str, int]:
     raw_spans = payload.get("spans", [])
     parsed = [parse_span(r) for r in raw_spans]
 
-    by_run: dict[str, list[Span]] = {}
+    # Resolve run_id per trace by finding the root span carrying agentaid.run_id;
+    # propagate that run_id to child spans in the same trace if they lack it.
+    # Falls back to using the trace_id itself when no agentaid.run_id is set.
+    by_trace: dict[str, list[Span]] = {}
+    raw_by_span: dict[str, dict] = {r["span_id"]: r for r in raw_spans}
     for s in parsed:
-        if not s.run_id:
-            continue
-        by_run.setdefault(s.run_id, []).append(s)
+        raw = raw_by_span.get(s.id, {})
+        trace_id = raw.get("trace_id", "")
+        by_trace.setdefault(trace_id, []).append(s)
+
+    trace_run_id: dict[str, str] = {}
+    for trace_id, spans in by_trace.items():
+        root_run = next(
+            (s.run_id for s in spans if s.parent_span_id is None and s.run_id),
+            "",
+        )
+        any_run = next((s.run_id for s in spans if s.run_id), "") if not root_run else root_run
+        trace_run_id[trace_id] = any_run or f"trace-{trace_id[:16]}"
+
+    by_run: dict[str, list[Span]] = {}
+    for trace_id, spans in by_trace.items():
+        run_id = trace_run_id[trace_id]
+        for s in spans:
+            if not s.run_id:
+                s.run_id = run_id
+            by_run.setdefault(s.run_id, []).append(s)
 
     inserted_spans = 0
     upserted_runs = 0
