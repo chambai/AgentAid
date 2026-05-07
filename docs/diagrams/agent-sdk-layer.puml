@@ -1,0 +1,38 @@
+@startuml agent-sdk-layer
+!theme plain
+skinparam backgroundColor white
+skinparam componentStyle rectangle
+skinparam linetype ortho
+skinparam packageBackgroundColor #f4f8ff
+skinparam componentBackgroundColor #ffffff
+skinparam ArrowColor #555555
+
+title Agent + SDK Layer
+
+package "Agent + SDK Layer" #f4f8ff {
+  [Reference Agent\n(Pydantic AI)] as Agent
+  [Bare Anthropic\nSDK Example] as Bare
+  component "agentaid-py SDK" as PySdk
+  component "agentaid-ts SDK" as TsSdk
+  database "Mock arXiv\n(default)" as Mock
+  database "Real arXiv API\n(feature flag)" as Real
+}
+
+[Server  /ingest] as Ingest
+
+Agent --> Mock : default
+Agent ..> Real : if AGENTAID_USE_REAL_ARXIV
+Agent --> PySdk : emit otel/genai spans
+Bare --> PySdk : manual otel/genai
+
+PySdk --> Ingest : HTTP POST  {spans:[…]}
+TsSdk --> Ingest : HTTP POST  {spans:[…]}
+
+note right of PySdk
+  All spans use the OpenTelemetry
+  GenAI semantic conventions —
+  the seam that makes AgentAid
+  framework-agnostic.
+end note
+
+@enduml

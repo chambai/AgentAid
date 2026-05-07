@@ -1,0 +1,36 @@
+@startuml frontend-layer
+!theme plain
+skinparam backgroundColor white
+skinparam componentStyle rectangle
+skinparam linetype ortho
+skinparam packageBackgroundColor #f3fff3
+skinparam componentBackgroundColor #ffffff
+skinparam ArrowColor #555555
+
+title Frontend Layer (Vite + React + TS)
+
+[Server  REST API] as Api
+
+package "Frontend Layer" #f3fff3 {
+  [Drift Home  /] as Home
+  [Trace Detail\n/runs/:id] as Trace
+  [Run Comparison\n/compare] as Compare
+  [Drift Detail × 3\n/drift/:signal] as DriftPage
+  [Eval Results  /evals] as Evals
+  [Datasets · Run List] as Other
+}
+
+Home --> Api : GET /drift, /runs
+Trace --> Api : GET /runs/:id
+Compare --> Api : GET /compare
+DriftPage --> Api : GET /drift/series/:signal
+Evals --> Api : GET /evals/recent
+Other --> Api : /datasets, /regressions
+
+note right of Api
+  Drift-first information architecture —
+  the home page is the platform's thesis,
+  every page is one click away.
+end note
+
+@enduml
