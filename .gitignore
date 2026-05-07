@@ -31,3 +31,7 @@ packages/agentaid-web/*.js
 *.sqlite
 *.sqlite-journal
 agentaid.db
+
+# Secrets
+.env
+.env.local
