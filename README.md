@@ -37,12 +37,19 @@ they answer fundamentally different questions.
 | Surface | Audience | Stack | Routes | Visual identity |
 |---|---|---|---|---|
 | `agentaid-web` (platform) | Engineers, on-call, ML team | Vite + React + TS, dashboard density | `/`, `/runs/:id`, `/compare`, `/drift/:signal`, `/evals`, `/datasets` | Drift-first IA, monospace IDs, red/orange drift accents |
-| `arxiv-digest-web` (consumer) | Researchers reading digests | Vite + React + TS, reading room | `/`, `/digests/:run_id` | Serif body, max 720 px column, warm off-white, no top nav, muted accents |
+| `arxiv-digest-web` (consumer) | Researchers reading and initiating digests | Vite + React + TS, reading room | `/` (search form + digest list), `/digests/:run_id` | Serif body, max 720 px column, warm off-white, no top nav, muted accents |
 
 Both consume the same AgentAid server, but through different API endpoints:
 the platform reads `/runs`, `/drift`, `/compare`, etc.; the consumer surface
-reads only `/digests` and `/digests/:run_id`, which strip platform metadata
-(tokens, cost, prompt SHAs) and shape the response for reading.
+reads `/digests` and `/digests/:run_id`, posts to `/digests` to spawn a new
+agent run, and pulls figure JPEGs from `/papers/:paper_id/figures/:filename`.
+The consumer endpoints strip platform metadata (tokens, cost, prompt SHAs)
+and shape the response for reading.
+
+The consumer home page also carries a search form: a researcher types a
+research interest plus a date window, and the server kicks off a fresh
+agent run as a subprocess, polling-friendly status flows back through
+the `GET /digests/:run_id` endpoint until the digest lands.
 
 | Consumer list (`/`) | Consumer detail (`/digests/:id`) |
 |---|---|

@@ -8,6 +8,8 @@ from opentelemetry.sdk.trace import ReadableSpan
 from opentelemetry.sdk.trace.export import SpanExporter, SpanExportResult
 from opentelemetry.trace.span import format_span_id, format_trace_id
 
+from .redactor import NoOpRedactor, SpanRedactor
+
 log = logging.getLogger(__name__)
 
 
@@ -44,16 +46,29 @@ class AgentAidSpanExporter(SpanExporter):
     """
 
     def __init__(
-        self, endpoint: str = "http://localhost:8000/ingest", timeout: float = 5.0
+        self,
+        endpoint: str = "http://localhost:8000/ingest",
+        timeout: float = 5.0,
+        redactor: SpanRedactor | None = None,
     ) -> None:
         self.endpoint = endpoint
         self.timeout = timeout
+        # Default to no-op for single-tenant dev usage. Production multi-tenant
+        # deployments should pass an AllowlistRedactor (or a stricter custom
+        # subclass) so customer prompts and model outputs never leave the
+        # customer perimeter. See agentaid.otel.redactor for the contract and
+        # docs/architecture/multi-tenant.md for the deployment story.
+        self.redactor: SpanRedactor = redactor or NoOpRedactor()
         self._client = httpx.Client(timeout=timeout)
 
     def export(self, spans: Sequence[ReadableSpan]) -> SpanExportResult:
         if not spans:
             return SpanExportResult.SUCCESS
-        payload = {"spans": [_serialize_span(s) for s in spans]}
+        serialised = (_serialize_span(s) for s in spans)
+        redacted = (self.redactor.redact(s) for s in serialised)
+        payload = {"spans": [s for s in redacted if s is not None]}
+        if not payload["spans"]:
+            return SpanExportResult.SUCCESS
         try:
             self._client.post(self.endpoint, json=payload)
             return SpanExportResult.SUCCESS

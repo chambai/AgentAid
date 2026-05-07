@@ -86,9 +86,18 @@ async def test_get_digest_not_found(app_with_digest) -> None:
 
 @pytest.mark.asyncio
 async def test_get_digest_no_digest_output(app_with_digest) -> None:
+    """A run that exists but has no digest still returns 200 with empty
+    fields so polling clients can detect silent agent failures (status
+    succeeded but digest empty) and surface a clear error rather than
+    spin forever on 404s.
+    """
     async with AsyncClient(transport=ASGITransport(app=app_with_digest), base_url="http://t") as c:
         r = await c.get("/digests/no-digest-run")
-    assert r.status_code == 404
+    assert r.status_code == 200
+    body = r.json()
+    assert body["run_id"] == "no-digest-run"
+    assert body["digest"] == ""
+    assert body["status"] in {"running", "succeeded", "failed"}
 
 
 # ---------------------------------------------------------------------------
