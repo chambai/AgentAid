@@ -1,0 +1,327 @@
+:root {
+  color-scheme: light;
+  font-family: Georgia, "Charter", "Iowan Old Style", "Apple Garamond", "Palatino Linotype", serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #fbfaf6;
+  color: #222;
+  line-height: 1.65;
+}
+
+/* Layout */
+.page-shell {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+}
+
+/* Header / nav chrome */
+.site-header {
+  padding: 1.25rem 0 1rem;
+  margin-bottom: 2rem;
+  border-bottom: 1px solid #d8d4ca;
+}
+
+.site-title {
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #555;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.site-title:hover {
+  color: #222;
+}
+
+.back-link {
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.875rem;
+  color: #7a8a7a;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.back-link:hover {
+  color: #3a5a3a;
+  text-decoration: underline;
+}
+
+/* DigestList */
+.digest-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.digest-card {
+  padding: 1.25rem 1.5rem;
+  background: #fff;
+  border: 1px solid #e0dcd4;
+  border-radius: 6px;
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.digest-card:hover {
+  border-color: #9aad9a;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
+}
+
+.digest-card-interest {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 0.25rem;
+}
+
+.digest-card-date {
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.85rem;
+  color: #7a8080;
+  margin: 0 0 0.5rem;
+}
+
+.digest-card-top-paper {
+  font-size: 0.95rem;
+  color: #444;
+  font-style: italic;
+  margin: 0 0 0.5rem;
+}
+
+.digest-card-meta {
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.8rem;
+  color: #9a9a8a;
+}
+
+/* DigestView header */
+.digest-header {
+  margin-bottom: 2rem;
+}
+
+.digest-header-interest {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin: 0 0 0.4rem;
+  color: #1a1a1a;
+}
+
+.digest-header-date {
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.9rem;
+  color: #7a8080;
+  margin: 0;
+}
+
+/* Markdown digest body */
+.digest-body {
+  font-size: 1rem;
+  line-height: 1.7;
+  color: #222;
+}
+
+.digest-body h1,
+.digest-body h2,
+.digest-body h3 {
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  color: #1a1a1a;
+  margin-top: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.digest-body h1 { font-size: 1.5rem; }
+.digest-body h2 { font-size: 1.25rem; border-bottom: 1px solid #e0dcd4; padding-bottom: 0.3rem; }
+.digest-body h3 { font-size: 1.05rem; }
+
+.digest-body p {
+  margin: 0.8rem 0;
+}
+
+.digest-body ul,
+.digest-body ol {
+  padding-left: 1.5rem;
+}
+
+.digest-body li {
+  margin: 0.3rem 0;
+}
+
+.digest-body code {
+  font-family: ui-monospace, monospace;
+  font-size: 0.88em;
+  background: #f0ede6;
+  padding: 0.1em 0.3em;
+  border-radius: 3px;
+}
+
+.digest-body pre {
+  background: #f0ede6;
+  border-radius: 4px;
+  padding: 1rem;
+  overflow-x: auto;
+}
+
+.digest-body pre code {
+  background: none;
+  padding: 0;
+}
+
+.digest-body hr {
+  border: none;
+  border-top: 1px solid #e0dcd4;
+  margin: 2rem 0;
+}
+
+.digest-body strong {
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.digest-body blockquote {
+  border-left: 3px solid #9aad9a;
+  margin: 1rem 0;
+  padding: 0.25rem 1rem;
+  color: #555;
+}
+
+/* Section divider */
+.section-divider {
+  border: none;
+  border-top: 1px solid #e0dcd4;
+  margin: 2.5rem 0;
+}
+
+/* Candidates section */
+.candidates-section h2,
+.papers-section h2 {
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #444;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 0 0 1rem;
+}
+
+.candidates-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+.candidates-table th {
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-align: left;
+  padding: 0.4rem 0.6rem;
+  border-bottom: 2px solid #e0dcd4;
+}
+
+.candidates-table td {
+  padding: 0.6rem 0.6rem;
+  border-bottom: 1px solid #ede9e0;
+  vertical-align: top;
+}
+
+.candidates-table tr:last-child td {
+  border-bottom: none;
+}
+
+.paper-id-cell {
+  font-family: ui-monospace, monospace;
+  font-size: 0.82rem;
+  color: #666;
+  white-space: nowrap;
+}
+
+.rationale-cell {
+  color: #555;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+/* Score chip */
+.score-chip {
+  display: inline-block;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.15em 0.5em;
+  border-radius: 999px;
+  white-space: nowrap;
+  min-width: 2.5rem;
+  text-align: center;
+}
+
+/* Per-paper sections */
+.paper-block {
+  margin: 1.25rem 0;
+  padding: 1rem 1.25rem;
+  background: #f8f6f0;
+  border-radius: 4px;
+  border-left: 3px solid #c4cfba;
+}
+
+.paper-block-id {
+  font-family: ui-monospace, monospace;
+  font-size: 0.82rem;
+  color: #777;
+  margin: 0 0 0.4rem;
+}
+
+.paper-block-summary {
+  font-size: 0.95rem;
+  color: #333;
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* Footer */
+.digest-footer {
+  margin-top: 3rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e0dcd4;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.78rem;
+  color: #aaa;
+}
+
+/* Loading / error states */
+.status-msg {
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  color: #888;
+  font-size: 0.95rem;
+  margin: 3rem 0;
+  text-align: center;
+}
+
+.error-msg {
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  color: #a05040;
+  background: #fdf3f0;
+  border: 1px solid #e8cdc8;
+  border-radius: 4px;
+  padding: 0.75rem 1rem;
+  font-size: 0.9rem;
+  margin: 2rem 0;
+}

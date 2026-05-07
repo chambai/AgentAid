@@ -1,4 +1,4 @@
-.PHONY: install dev test lint typecheck clean server web agent
+.PHONY: install dev test lint typecheck clean server web agent digest
 
 install:
 	uv sync
@@ -15,6 +15,9 @@ web:
 
 agent:
 	uv run python -m arxiv_agent
+
+digest:
+	AGENTAID_API_PORT=$${AGENTAID_API_PORT:-8000} pnpm --filter arxiv-digest-web dev
 
 test:
 	uv run pytest
