@@ -1,12 +1,29 @@
 from __future__ import annotations
 
+import json
+
 from fastapi import APIRouter, BackgroundTasks, status
 from sqlmodel import select
+
+from agentaid.otel.conventions import AgentAid
 
 from ..db import engine as _db_engine
 from ..db.models import Run, Span
 from ..ingestion.parser import derive_run, parse_span
 from ..orchestrator import run_invariants, run_online
+
+
+def _decode_attr(value: object) -> object:
+    """Span attributes are scalars/strings on the wire. agentaid.input and
+    agentaid.output are JSON-encoded strings — decode them back to dicts so
+    they can be stored as JSON columns directly.
+    """
+    if isinstance(value, str):
+        try:
+            return json.loads(value)
+        except (TypeError, ValueError):
+            return value
+    return value
 
 router = APIRouter()
 
@@ -57,6 +74,24 @@ async def ingest(payload: dict, bg: BackgroundTasks) -> dict[str, int]:
                 if root and root.ended_at:
                     existing.ended_at = root.ended_at
                     existing.status = "succeeded"
+                    # Pull agentaid.input / agentaid.output off the root span
+                    # if the placeholder row didn't have them yet. This is
+                    # the path POST /digests takes — the placeholder is
+                    # created with input only; the agent fills in output via
+                    # this attribute when it finishes.
+                    attrs = root.attributes or {}
+                    raw_input = attrs.get(AgentAid.INPUT)
+                    if raw_input is not None and not existing.input:
+                        existing.input = _decode_attr(raw_input)  # type: ignore[assignment]
+                    raw_output = attrs.get(AgentAid.OUTPUT)
+                    if raw_output is not None:
+                        decoded = _decode_attr(raw_output)
+                        existing.output = decoded  # type: ignore[assignment]
+                        # If the agent recorded an explicit error in its
+                        # output, mark the run as failed so the consumer UI
+                        # surfaces a clear error rather than "silent failure".
+                        if isinstance(decoded, dict) and decoded.get("error"):
+                            existing.status = "failed"
                     session.add(existing)
             for s in spans:
                 in_db = await session.get(Span, s.id)
