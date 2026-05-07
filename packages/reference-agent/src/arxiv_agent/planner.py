@@ -28,10 +28,17 @@ class PaperSection(BaseModel):
     summary: str
 
 
+class FigureRecord(BaseModel):
+    caption: str
+    description: str
+    filename: str | None = None
+
+
 class PlannerResult(BaseModel):
     digest: str
     candidates: list[CandidateRecord]
     sections: list[PaperSection]
+    figures: dict[str, list[FigureRecord]] = Field(default_factory=dict)
 
 
 def _prompt() -> str:
@@ -79,7 +86,15 @@ def build_planner_agent() -> Agent[PlannerInput, PlannerResult]:
             f"{ctx.deps.research_interest}. Return the WorkerResult."
         )
         res = await worker.run(worker_prompt, deps=worker_deps)
-        return {"paper_id": res.output.paper_id, "summary": res.output.summary}
+        figures = [
+            {"caption": f.caption, "description": f.description, "filename": f.filename}
+            for f in res.output.figure_descriptions
+        ]
+        return {
+            "paper_id": res.output.paper_id,
+            "summary": res.output.summary,
+            "figures": figures,
+        }
 
     @agent.tool
     async def compose_digest(ctx: RunContext[PlannerInput],

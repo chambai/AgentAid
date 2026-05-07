@@ -27,6 +27,7 @@ class Figure:
     caption: str
     content_type: str
     data: bytes
+    filename: str | None = None
 
 
 def _load_corpus() -> list[dict]:  # type: ignore[type-arg]
@@ -105,6 +106,7 @@ class MockArxivCore:
                     caption=f["caption"],
                     content_type="image/jpeg",
                     data=data,
+                    filename=f["filename"],
                 )
             )
         return out

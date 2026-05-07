@@ -18,6 +18,7 @@ class WorkerInput(BaseModel):
 class FigureDescription(BaseModel):
     caption: str
     description: str
+    filename: str | None = None
 
 
 class WorkerResult(BaseModel):
@@ -48,7 +49,7 @@ def build_worker_agent() -> Agent[WorkerInput, WorkerResult]:
     @agent.tool
     async def extract_figures(ctx: RunContext[WorkerInput], paper_id: str) -> list[dict]:
         descs = await tools.extract_figures(paper_id)
-        return [{"caption": d.caption, "description": d.description} for d in descs]
+        return [{"caption": d.caption, "description": d.description, "filename": d.filename} for d in descs]
 
     @agent.tool
     async def summarize(ctx: RunContext[WorkerInput], paper_id: str, focus: str) -> str:

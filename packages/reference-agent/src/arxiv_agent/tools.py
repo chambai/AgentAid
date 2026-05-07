@@ -20,6 +20,7 @@ class FigureDescription:
     paper_id: str
     caption: str
     description: str
+    filename: str | None = None
 
 
 @dataclass(frozen=True)
@@ -73,7 +74,7 @@ async def extract_figures(paper_id: str) -> list[FigureDescription]:
             "Describe what this figure shows in 1-2 sentences. Be specific.",
             f.data, content_type=f.content_type,
         )
-        out.append(FigureDescription(paper_id=paper_id, caption=f.caption, description=desc))
+        out.append(FigureDescription(paper_id=paper_id, caption=f.caption, description=desc, filename=f.filename))
     return out
 
 

@@ -36,6 +36,7 @@ from .api import datasets as datasets_api  # noqa: E402
 from .api import digests as digests_api  # noqa: E402
 from .api import drift as drift_api  # noqa: E402
 from .api import evals as evals_api  # noqa: E402
+from .api import figures as figures_api  # noqa: E402
 from .api import ingest as ingest_api  # noqa: E402
 from .api import regression as regression_api  # noqa: E402
 from .api import runs as runs_api  # noqa: E402
@@ -48,6 +49,7 @@ app.include_router(evals_api.router)
 app.include_router(datasets_api.router)
 app.include_router(regression_api.router)
 app.include_router(compare_api.router)
+app.include_router(figures_api.router)
 
 @app.get("/healthz")
 async def healthz() -> dict[str, str]:

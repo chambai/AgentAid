@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 import sys
 import uuid
 
@@ -15,7 +16,7 @@ from .planner import PlannerInput, build_planner_agent
 async def _main(research_interest: str, date_from: str, date_to: str) -> None:
     install_otel()
     tracer = trace.get_tracer("arxiv_agent.cli")
-    run_id = f"live-{uuid.uuid4().hex[:10]}"
+    run_id = os.environ.get("AGENTAID_RUN_ID") or f"live-{uuid.uuid4().hex[:10]}"
 
     with tracer.start_as_current_span("arxiv_agent.run") as root:
         root.set_attribute(AgentAid.RUN_ID, run_id)
@@ -48,6 +49,10 @@ async def _main(research_interest: str, date_from: str, date_to: str) -> None:
                 "digest": res.output.digest,
                 "candidates": [c.model_dump() for c in res.output.candidates],
                 "sections": [s.model_dump() for s in res.output.sections],
+                "figures": {
+                    pid: [f.model_dump() for f in figs]
+                    for pid, figs in res.output.figures.items()
+                },
             }),
         )
 

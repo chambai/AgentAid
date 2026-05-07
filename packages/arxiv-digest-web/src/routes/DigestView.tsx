@@ -5,7 +5,7 @@ import remarkGfm from "remark-gfm";
 import { format, parseISO } from "date-fns";
 import { getDigest } from "../api/client";
 import ScoreChip from "../components/ScoreChip";
-import type { Candidate, PaperSection } from "../api/types";
+import type { Candidate, DigestFigure, PaperSection } from "../api/types";
 
 function absDate(iso: string | null): string {
   if (!iso) return "";
@@ -67,6 +67,41 @@ function SectionsSection({ sections }: { sections: PaperSection[] }) {
   );
 }
 
+function FiguresSection({ figures }: { figures: Record<string, DigestFigure[]> }) {
+  const entries = Object.entries(figures).filter(([, figs]) => figs.length > 0);
+  if (entries.length === 0) return null;
+  return (
+    <section className="figures-section">
+      <h2>Figures</h2>
+      {entries.map(([paperId, figs]) => (
+        <div key={paperId} className="figures-paper-group">
+          <p className="figures-paper-id">{paperId}</p>
+          <div className="figures-grid">
+            {figs.map((fig, i) => (
+              <div key={i} className="figure-item">
+                {fig.filename && (
+                  <img
+                    src={`/api/papers/${encodeURIComponent(paperId)}/figures/${encodeURIComponent(fig.filename)}`}
+                    alt={fig.caption}
+                    className="figure-img"
+                    loading="lazy"
+                  />
+                )}
+                {fig.caption && (
+                  <p className="figure-caption">{fig.caption}</p>
+                )}
+                {fig.description && (
+                  <p className="figure-description">{fig.description}</p>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </section>
+  );
+}
+
 export default function DigestView() {
   const { id } = useParams<{ id: string }>();
   const { data, isLoading, error } = useQuery({
@@ -105,6 +140,12 @@ export default function DigestView() {
       )}
 
       <SectionsSection sections={data.sections} />
+
+      {Object.keys(data.figures ?? {}).length > 0 && (
+        <hr className="section-divider" />
+      )}
+
+      <FiguresSection figures={data.figures ?? {}} />
 
       <footer className="digest-footer">
         Run id: {data.run_id}

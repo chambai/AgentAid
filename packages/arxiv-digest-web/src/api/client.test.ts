@@ -24,6 +24,7 @@ const mockDigestDetail: DigestDetail = {
   sections: [
     { paper_id: "2401.00001", summary: "ADWIN-2 achieves O(log n) memory." },
   ],
+  figures: {},
 };
 
 beforeEach(() => {

@@ -306,6 +306,234 @@ body {
   color: #aaa;
 }
 
+/* Search form */
+.search-form-container {
+  margin-bottom: 2.5rem;
+  padding: 1.5rem 1.75rem;
+  background: #fff;
+  border: 1px solid #e0dcd4;
+  border-radius: 6px;
+}
+
+.search-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.search-label {
+  font-family: Georgia, "Charter", serif;
+  font-size: 0.9rem;
+  color: #444;
+  display: block;
+  margin-bottom: 0.2rem;
+}
+
+.search-input {
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.95rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d0ccc4;
+  border-radius: 4px;
+  background: #fbfaf6;
+  color: #222;
+  width: 100%;
+  transition: border-color 0.15s;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #9aad9a;
+}
+
+.search-date-row {
+  display: flex;
+  gap: 1rem;
+}
+
+.search-date-field {
+  flex: 1;
+}
+
+.search-input-date {
+  width: 100%;
+}
+
+.search-submit {
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 0.55rem 1.25rem;
+  background: #4a6a4a;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  align-self: flex-start;
+  transition: background 0.15s;
+}
+
+.search-submit:hover:not(:disabled) {
+  background: #3a5a3a;
+}
+
+.search-submit:disabled {
+  background: #9aad9a;
+  cursor: default;
+}
+
+.search-error {
+  margin-top: 0.25rem;
+}
+
+/* Saved searches */
+.saved-searches {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.25rem;
+}
+
+.saved-searches-label {
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.8rem;
+  color: #888;
+  white-space: nowrap;
+  padding-top: 0.2rem;
+}
+
+.saved-searches-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.saved-search-chip {
+  display: inline-flex;
+  align-items: center;
+  background: #f0ede6;
+  border: 1px solid #ddd8cf;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.saved-search-btn {
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.78rem;
+  color: #444;
+  background: none;
+  border: none;
+  padding: 0.2em 0.6em 0.2em 0.75em;
+  cursor: pointer;
+}
+
+.saved-search-btn:hover {
+  color: #1a1a1a;
+}
+
+.saved-search-remove {
+  font-size: 0.75rem;
+  color: #aaa;
+  background: none;
+  border: none;
+  padding: 0.2em 0.5em 0.2em 0.1em;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.saved-search-remove:hover {
+  color: #a05040;
+}
+
+/* Running indicator */
+.running-indicator {
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  background: #f4f8f4;
+  border: 1px solid #c4cfba;
+  border-radius: 4px;
+}
+
+.running-indicator-msg {
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.9rem;
+  color: #4a6a4a;
+  margin: 0;
+}
+
+.running-indicator-failed {
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.9rem;
+  color: #a05040;
+  margin: 0;
+}
+
+.running-spinner {
+  display: inline-block;
+  animation: spin 1.2s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Figures section */
+.figures-section h2 {
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #444;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 0 0 1rem;
+}
+
+.figures-paper-group {
+  margin-bottom: 1.5rem;
+}
+
+.figures-paper-id {
+  font-family: ui-monospace, monospace;
+  font-size: 0.82rem;
+  color: #777;
+  margin: 0 0 0.75rem;
+}
+
+.figures-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.figure-item {
+  max-width: 480px;
+}
+
+.figure-img {
+  max-width: 100%;
+  width: 480px;
+  height: auto;
+  border-radius: 4px;
+  border: 1px solid #e0dcd4;
+  display: block;
+}
+
+.figure-caption {
+  font-style: italic;
+  font-size: 0.85rem;
+  color: #666;
+  margin: 0.4rem 0 0.25rem;
+  line-height: 1.4;
+}
+
+.figure-description {
+  font-size: 0.9rem;
+  color: #333;
+  margin: 0;
+  line-height: 1.55;
+}
+
 /* Loading / error states */
 .status-msg {
   font-family: ui-sans-serif, system-ui, sans-serif;

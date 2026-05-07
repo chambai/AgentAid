@@ -19,6 +19,12 @@ export interface PaperSection {
   summary: string;
 }
 
+export interface DigestFigure {
+  caption: string;
+  description: string;
+  filename: string | null;
+}
+
 export interface DigestDetail {
   run_id: string;
   research_interest: string | null;
@@ -28,4 +34,25 @@ export interface DigestDetail {
   digest: string;
   candidates: Candidate[];
   sections: PaperSection[];
+  figures: Record<string, DigestFigure[]>;
+  status?: string;
+}
+
+export interface CreateDigestRequest {
+  research_interest: string;
+  date_from: string;
+  date_to: string;
+  model?: string;
+}
+
+export interface CreateDigestResponse {
+  run_id: string;
+  status: "running" | "succeeded" | "failed";
+}
+
+export interface SavedSearch {
+  research_interest: string;
+  date_from: string;
+  date_to: string;
+  savedAt: string;
 }
