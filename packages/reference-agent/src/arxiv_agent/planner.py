@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from contextvars import ContextVar
 from importlib.resources import files
 
 from pydantic import BaseModel, Field
@@ -8,6 +9,14 @@ from pydantic_ai.models.anthropic import AnthropicModel
 
 from . import tools
 from .worker import WorkerInput, build_worker_agent
+
+# Side-channel accumulator for figures captured during dispatch_worker calls.
+# The LLM is supposed to thread these into PlannerResult.figures, but it's
+# inconsistent at doing so — figures are deterministic data, not a judgment
+# call, so we capture them programmatically and merge after the run.
+figures_ctx: ContextVar[dict[str, list[dict]]] = ContextVar(
+    "agentaid_figures", default={}
+)
 
 
 class PlannerInput(BaseModel):
@@ -90,6 +99,10 @@ def build_planner_agent() -> Agent[PlannerInput, PlannerResult]:
             {"caption": f.caption, "description": f.description, "filename": f.filename}
             for f in res.output.figure_descriptions
         ]
+        # Capture figures in the contextvar so the caller can recover them
+        # even if the LLM doesn't fold them into PlannerResult.figures.
+        accumulator = figures_ctx.get()
+        accumulator[paper_id] = figures
         return {
             "paper_id": res.output.paper_id,
             "summary": res.output.summary,
