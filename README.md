@@ -26,6 +26,31 @@ The included **arXiv research agent** is the reference workload — a multi-agen
 (planner + worker) pipeline with multi-modal figure extraction, used to exercise
 the platform on real-shaped traffic and to drive the demo.
 
+## Two surfaces, two stakeholders
+
+Production AI agents have two audiences. The team running them needs traces,
+drift, eval scores, regression diffs. The team consuming the output needs a
+clean reading surface. AgentAid ships both as **deliberately separate apps**
+— same database, separate API endpoints, different design languages — because
+they answer fundamentally different questions.
+
+| Surface | Audience | Stack | Routes | Visual identity |
+|---|---|---|---|---|
+| `agentaid-web` (platform) | Engineers, on-call, ML team | Vite + React + TS, dashboard density | `/`, `/runs/:id`, `/compare`, `/drift/:signal`, `/evals`, `/datasets` | Drift-first IA, monospace IDs, red/orange drift accents |
+| `arxiv-digest-web` (consumer) | Researchers reading digests | Vite + React + TS, reading room | `/`, `/digests/:run_id` | Serif body, max 720 px column, warm off-white, no top nav, muted accents |
+
+Both consume the same AgentAid server, but through different API endpoints:
+the platform reads `/runs`, `/drift`, `/compare`, etc.; the consumer surface
+reads only `/digests` and `/digests/:run_id`, which strip platform metadata
+(tokens, cost, prompt SHAs) and shape the response for reading.
+
+| Consumer list (`/`) | Consumer detail (`/digests/:id`) |
+|---|---|
+| ![digest list](docs/screenshots/07-digest-list.png) | ![digest view](docs/screenshots/08-digest-view.png) |
+
+The deliberate separation is also the natural seam for a real distributed
+deployment — see the **Roadmap** section below.
+
 ## Architecture
 
 ![Architecture](docs/diagrams/architecture.png)
@@ -36,8 +61,11 @@ Three layers, OTel/GenAI at the seam between them:
    example. Both emit OTel/GenAI spans via the `agentaid` Python or TypeScript SDK.
 2. **Server layer** — FastAPI + SQLModel + SQLite. Ingests spans, runs LLM-judge
    evals async, runs three drift-detector workers on a 5-second tick.
-3. **Frontend layer** — Vite + React + TypeScript. Drift-first home, Gantt trace
-   detail, summary-led run comparison, drift detail × 3, eval results, datasets.
+3. **Frontend layer** — two Vite + React + TS apps:
+   - `agentaid-web` for the platform (drift home, Gantt trace detail, run
+     comparison, drift detail × 3, eval results, datasets).
+   - `arxiv-digest-web` for consumers reading the agent's output (digest
+     list + per-digest reading view).
 
 ### Domain model and run lifecycle
 
@@ -68,8 +96,9 @@ Sources: [`docs/diagrams/architecture.puml`](docs/diagrams/architecture.puml) ·
 
 ```bash
 make install
-make server   # http://localhost:8000
-make web      # http://localhost:5173
+make server   # platform server   :8000
+make web      # platform UI       :5173
+make digest   # consumer UI       :5174  (reads /digests, no platform chrome)
 uv run python scripts/load_golden.py
 uv run python scripts/seed_drift.py   # makes drift visibly fire in the demo
 ```
@@ -106,13 +135,29 @@ Then open `/datasets` to watch results stream in.
 
 | Out | Why |
 |---|---|
-| Multi-tenancy / auth | Single-developer dev tool. |
+| Multi-tenancy / auth | Single-developer dev tool. The architectural seams for an edge-agent + sanitised-egress + per-tenant data plane deployment are documented in [`docs/architecture/multi-tenant.md`](docs/architecture/multi-tenant.md). |
 | Real-time WebSocket streaming | Polling is sufficient for the demo. |
 | Drift methods beyond ADWIN/MMD/PSI | Plugin interface designed for additions; demonstrating the interface matters more than method count. |
 | Mobile-responsive UI | Reviewer is on a desktop. |
 | Live deployment | Replaced by the recorded walkthrough above. |
 | Prompt-versioning UI | Prompts are code, versioned in git, surfaced as SHAs. UI for editing them is low ROI. |
 | OpenAI provider | Anthropic-only; OTel/GenAI conventions and the bare-SDK example carry the framework-agnostic claim. |
+
+## Roadmap toward production multi-tenant
+
+AgentAid's current architecture is single-tenant by design — it's a
+single-developer dev tool. The architectural seams it has, however, are
+already the right shape for a real distributed deployment: customers run
+agents and consumer UIs on-premises; the AI-company provider runs a
+multi-tenant control plane in the cloud; the SDK exporter is the natural
+egress filter for content redaction; per-tenant data isolation is a
+server-layer concern, not a rewrite.
+
+The full design — boundaries, redaction policy, mTLS / scoped API keys,
+per-tenant data plane, edge eval LLM judges — is in
+[`docs/architecture/multi-tenant.md`](docs/architecture/multi-tenant.md).
+That document also enumerates what AgentAid already has versus what would
+need to change, with rough effort estimates.
 
 ## Repository layout
 
@@ -122,15 +167,21 @@ agentaid/
 │   ├── agentaid-py/         # Python SDK: otel exporter, eval framework, drift detectors
 │   ├── agentaid-ts/         # TypeScript SDK: otel exporter, eval define, invariants
 │   ├── agentaid-server/     # FastAPI server: ingestion, evals, drift workers, regression
-│   ├── agentaid-web/        # Vite + React + TS frontend
+│   ├── agentaid-web/        # Vite + React + TS — platform UI (engineers)
+│   ├── arxiv-digest-web/    # Vite + React + TS — consumer UI (researchers)
 │   ├── reference-agent/     # Pydantic AI arXiv agent + mock arXiv layer
 │   └── bare-sdk-example/    # Bare Anthropic SDK + manual otel — framework-agnostic proof
 ├── eval/golden/             # 10-row curated dataset for Mode 2 regression
 ├── scripts/
-│   ├── load_golden.py       # Seeds golden dataset into the server
-│   ├── seed_drift.py        # Synthetic drift seed for demos
-│   └── run_demo.py          # Scripted demo driver
-└── docs/superpowers/        # Design spec + implementation plan
+│   ├── load_golden.py             # Seeds golden dataset into the server
+│   ├── seed_drift.py              # Synthetic drift seed for demos
+│   ├── run_demo.py                # Scripted demo driver
+│   ├── record_walkthrough.py      # Playwright auto-recording of the platform UI tour
+│   ├── add_captions.py            # Burns product-description + skill captions into the video
+│   ├── capture_digest_screens.py  # Playwright capture of consumer-UI screenshots
+│   └── make_gif.sh                # ffmpeg two-pass palette → GIF
+├── docs/superpowers/        # Design spec + implementation plan
+└── docs/architecture/       # Production-shaped design notes (multi-tenant)
 ```
 
 See `docs/superpowers/specs/2026-05-06-agentaid-design.md` for the full design,
