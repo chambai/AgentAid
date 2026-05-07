@@ -8,7 +8,7 @@ dev:
 	@echo "Run \`make server\` and \`make web\` in separate terminals."
 
 server:
-	uv run uvicorn agentaid_server.main:app --reload --port 8000
+	uv run uvicorn agentaid_server.main:app --reload --port $${AGENTAID_API_PORT:-8000}
 
 web:
 	pnpm --filter agentaid-web dev
