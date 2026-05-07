@@ -62,16 +62,37 @@ async def main() -> None:
 
         # ── Consumer surface (researcher) ─────────────────────────
 
-        # 0–5 s — Digest list: cards of available research digests
+        # 0–6 s — Search form: researcher types a research interest. We don't
+        # submit (that would cost ~$0.30 in real Anthropic spend on every
+        # recording). Just focus + type a plausible interest to show the seam.
         await page.goto(f"{CONSUMER_WEB}/", wait_until="networkidle")
-        await page.wait_for_timeout(4500)
+        await page.wait_for_timeout(800)
+        try:
+            interest_input = page.locator("#research-interest")
+            await interest_input.click(timeout=2000)
+            await page.keyboard.type(
+                "concept drift detection in streaming ML",
+                delay=70,
+            )
+            await page.wait_for_timeout(1200)
+        except Exception:
+            await page.wait_for_timeout(2000)
 
-        # 5–11 s — Digest detail: rendered Markdown of the agent's output
+        # 6–11 s — Digest list (the cards below the form)
+        try:
+            # scroll past the form so the cards are the focal area
+            await page.evaluate("window.scrollTo({ top: 320, behavior: 'smooth' })")
+            await page.wait_for_timeout(4000)
+            await page.evaluate("window.scrollTo({ top: 0, behavior: 'smooth' })")
+            await page.wait_for_timeout(500)
+        except Exception:
+            await page.wait_for_timeout(4500)
+
+        # 11–17 s — Digest detail: rendered Markdown of the agent's output
         await page.goto(
             f"{CONSUMER_WEB}/digests/{DIGEST_RUN_ID}", wait_until="networkidle"
         )
         await page.wait_for_timeout(4000)
-        # A small scroll to show the digest body is rich content, not a teaser
         try:
             await page.evaluate("window.scrollTo({ top: 220, behavior: 'smooth' })")
             await page.wait_for_timeout(1500)

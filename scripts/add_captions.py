@@ -40,15 +40,16 @@ FONT_REGULAR = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
 # the agent), so the contrast between the two stakeholders lands first.
 CAPTIONS: list[tuple[float, float, str]] = [
     # Consumer surface — researcher
-    (0.5,   4.5,  "Consumer surface — researchers read the digests the agent produced. No platform chrome."),
-    (5.5,  10.5,  "The agent's actual output: Markdown digest, paper summaries, scores. This is what the customer came for."),
+    (0.5,   5.5,  "Search form — researchers initiate a digest by typing a research interest"),
+    (6.5,  10.5,  "Existing digests are listed below — every prior agent run is one click away"),
+    (11.5, 16.5,  "Each digest opens to the rendered Markdown — the agent's actual output for the customer"),
     # Platform surface — engineer
-    (12.0, 17.5,  "Platform surface — AgentAid surfaces drift across inputs, tool-call patterns, and eval scores"),
-    (18.5, 23.5,  "Multi-agent traces — planner spawns workers in parallel, every tool call instrumented"),
-    (24.0, 28.0,  "Spans follow OpenTelemetry GenAI semantic conventions — framework-agnostic"),
-    (28.5, 33.5,  "ADWIN online change detection on streaming eval scores, with adaptive thresholds"),
-    (34.0, 42.5,  "Compare runs by score deltas, cost, and tool-call distribution shift (PSI)"),
-    (43.0, 46.5,  "Eval-first orchestration — typed Pydantic results from LLM judges and invariants"),
+    (18.0, 23.5,  "Platform surface — AgentAid surfaces drift across inputs, tool-call patterns, and eval scores"),
+    (24.5, 29.5,  "Multi-agent traces — planner spawns workers in parallel, every tool call instrumented"),
+    (30.0, 34.0,  "Spans follow OpenTelemetry GenAI semantic conventions — framework-agnostic"),
+    (34.5, 39.5,  "ADWIN online change detection on streaming eval scores, with adaptive thresholds"),
+    (40.0, 48.5,  "Compare runs by score deltas, cost, and tool-call distribution shift (PSI)"),
+    (49.0, 52.5,  "Eval-first orchestration — typed Pydantic results from LLM judges and invariants"),
 ]
 
 # Each layer frame: a focused PUML render (rendered separately) + skill caption.
