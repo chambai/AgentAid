@@ -73,7 +73,12 @@ class MockArxivCore:
         return results[:limit]
 
     def fetch_metadata(self, paper_id: str) -> PaperSummary:
-        p = self._by_id[paper_id]
+        p = self._by_id.get(paper_id)
+        if p is None:
+            raise ValueError(
+                f"paper_id {paper_id!r} is not in the mock corpus. "
+                f"Use search_arxiv first to find a real paper id; do not invent one."
+            )
         return PaperSummary(
             id=p["id"],
             title=p["title"],
@@ -84,7 +89,12 @@ class MockArxivCore:
         )
 
     def fetch_paper(self, paper_id: str) -> Paper:
-        p = self._by_id[paper_id]
+        p = self._by_id.get(paper_id)
+        if p is None:
+            raise ValueError(
+                f"paper_id {paper_id!r} is not in the mock corpus. "
+                f"Use search_arxiv first to find a real paper id; do not invent one."
+            )
         return Paper(
             id=p["id"],
             title=p["title"],
@@ -96,7 +106,11 @@ class MockArxivCore:
         )
 
     def extract_figures(self, paper_id: str) -> list[Figure]:
-        p = self._by_id[paper_id]
+        p = self._by_id.get(paper_id)
+        if p is None:
+            raise ValueError(
+                f"paper_id {paper_id!r} is not in the mock corpus."
+            )
         out: list[Figure] = []
         for f in p.get("figures", []):
             data = (_figures_dir() / f["filename"]).read_bytes()

@@ -9,6 +9,7 @@ import uuid
 from agentaid.otel import install as install_otel
 from agentaid.otel.conventions import AgentAid
 from opentelemetry import trace
+from opentelemetry.trace import StatusCode
 
 from .planner import PlannerInput, build_planner_agent
 
@@ -41,7 +42,26 @@ async def _main(research_interest: str, date_from: str, date_to: str) -> None:
             f"Date window: {date_from} to {date_to}\n"
             "Produce the digest now."
         )
-        res = await agent.run(user_prompt, deps=deps)
+        try:
+            res = await agent.run(user_prompt, deps=deps)
+        except Exception as exc:
+            # Mark the run as failed so the digest endpoint and consumer UI
+            # can stop polling and surface a clear error rather than spin
+            # forever.
+            root.set_attribute(
+                AgentAid.OUTPUT,
+                json.dumps({
+                    "digest": "",
+                    "candidates": [],
+                    "sections": [],
+                    "figures": {},
+                    "error": f"{type(exc).__name__}: {exc}",
+                }),
+            )
+            root.set_status(StatusCode.ERROR, str(exc))
+            print(json.dumps({"run_id": run_id, "error": str(exc)}, indent=2),
+                  file=sys.stderr)
+            raise SystemExit(1)
 
         root.set_attribute(
             AgentAid.OUTPUT,

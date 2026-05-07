@@ -1,13 +1,20 @@
 import { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { formatDistanceToNow, parseISO, subYears, format } from "date-fns";
+import { formatDistanceToNow, parseISO } from "date-fns";
 import { listDigests, createDigest, getDigest } from "../api/client";
 import type { DigestSummary, SavedSearch } from "../api/types";
 
 const STORAGE_KEY = "agentaid-digest:saved-searches";
 const MAX_SAVED = 20;
 const MAX_CHIPS = 5;
+
+// The mock arXiv corpus this dev build runs against contains papers published
+// during 2024 only. Default the form to that range so submitting from-the-box
+// has content to find. The real arXiv API (behind AGENTAID_USE_REAL_ARXIV)
+// would obviously cover more.
+const DEFAULT_DATE_FROM = "2024-01-01";
+const DEFAULT_DATE_TO = "2024-12-31";
 
 function relativeTime(iso: string | null): string {
   if (!iso) return "";
@@ -23,14 +30,6 @@ function dateWindow(from: string | null, to: string | null): string {
   if (from) return `from ${from}`;
   if (to) return `to ${to}`;
   return "";
-}
-
-function todayStr(): string {
-  return format(new Date(), "yyyy-MM-dd");
-}
-
-function oneYearAgoStr(): string {
-  return format(subYears(new Date(), 1), "yyyy-MM-dd");
 }
 
 // ---------- Saved searches helpers ----------
@@ -127,40 +126,73 @@ function SavedSearchChips({
 function RunningIndicator({
   runId,
   onReady,
+  onDismiss,
 }: {
   runId: string;
   onReady: (id: string) => void;
+  onDismiss: () => void;
 }) {
   const { data } = useQuery({
     queryKey: ["digest-poll", runId],
     queryFn: () => getDigest(runId),
     refetchInterval: (query) => {
       const d = query.state.data;
-      if (d && d.digest) return false; // stop polling
-      if (d && d.status === "failed") return false;
+      if (!d) return 3000;
+      // Stop on any terminal state. A run with status=succeeded but an empty
+      // digest is a silent failure (the agent crashed before writing output)
+      // — treat it as terminal too, otherwise the spinner spins forever.
+      if (d.digest) return false;
+      if (d.status === "failed") return false;
+      if (d.status === "succeeded") return false;
       return 3000;
     },
   });
 
   useEffect(() => {
-    if (data?.digest) {
-      onReady(runId);
-    }
+    if (data?.digest) onReady(runId);
   }, [data, runId, onReady]);
 
-  const isFailed = data?.status === "failed";
+  // Three terminal states surfaced to the user:
+  //   1. ready  — digest non-empty, will be navigated to.
+  //   2. error  — explicit error from the agent (output.error is set).
+  //   3. silent — status=succeeded but digest empty (agent crashed early).
+  const error = data?.error;
+  const silentFail = data?.status === "succeeded" && !data?.digest;
+  const explicitFail = data?.status === "failed";
+  const isFailed = explicitFail || silentFail;
 
   return (
     <div className="running-indicator">
       {isFailed ? (
-        <p className="running-indicator-failed">
-          Run <code>{runId}</code> failed. Check server logs.
-        </p>
+        <>
+          <p className="running-indicator-failed">
+            Run <code>{runId}</code> failed.
+            {error ? <> {error}</> : silentFail
+              ? <> The agent finished without producing a digest. Common cause: the date range has no papers (the mock corpus only covers 2024).</>
+              : <> Check server logs.</>}
+          </p>
+          <button
+            type="button"
+            className="running-indicator-dismiss"
+            onClick={onDismiss}
+          >
+            Dismiss
+          </button>
+        </>
       ) : (
-        <p className="running-indicator-msg">
-          <span className="running-spinner" aria-hidden="true">⟳</span>{" "}
-          Generating digest… <code>{runId}</code>
-        </p>
+        <>
+          <p className="running-indicator-msg">
+            <span className="running-spinner" aria-hidden="true">⟳</span>{" "}
+            Generating digest… <code>{runId}</code>
+          </p>
+          <button
+            type="button"
+            className="running-indicator-dismiss"
+            onClick={onDismiss}
+          >
+            Cancel
+          </button>
+        </>
       )}
     </div>
   );
@@ -174,8 +206,8 @@ function SearchForm({
   onSubmit: (interest: string, dateFrom: string, dateTo: string) => void;
 }) {
   const [interest, setInterest] = useState("");
-  const [dateFrom, setDateFrom] = useState(oneYearAgoStr);
-  const [dateTo, setDateTo] = useState(todayStr);
+  const [dateFrom, setDateFrom] = useState(DEFAULT_DATE_FROM);
+  const [dateTo, setDateTo] = useState(DEFAULT_DATE_TO);
   const [savedSearches, setSavedSearches] = useState<SavedSearch[]>(loadSaved);
   const [runningId, setRunningId] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -294,8 +326,16 @@ function SearchForm({
         )}
       </form>
       {runningId && (
-        <RunningIndicator runId={runningId} onReady={handleReady} />
+        <RunningIndicator
+          runId={runningId}
+          onReady={handleReady}
+          onDismiss={() => setRunningId(null)}
+        />
       )}
+      <p className="search-hint">
+        The dev build searches a mock arXiv corpus of 2024 papers. Real arXiv
+        is behind a feature flag.
+      </p>
     </div>
   );
 }

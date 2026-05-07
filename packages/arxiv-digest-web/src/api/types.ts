@@ -36,6 +36,7 @@ export interface DigestDetail {
   sections: PaperSection[];
   figures: Record<string, DigestFigure[]>;
   status?: string;
+  error?: string | null;
 }
 
 export interface CreateDigestRequest {

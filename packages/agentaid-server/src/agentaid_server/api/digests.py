@@ -62,24 +62,27 @@ async def get_digest(run_id: str) -> dict:
     if run is None:
         raise HTTPException(404, f"digest for run {run_id} not found")
 
-    # For running/failed runs with no digest yet, return partial status so
-    # polling clients can track progress without getting 404s.
+    # For runs with no digest yet, return partial status so polling clients
+    # can track progress (or surface a silent failure) without 404s. Includes
+    # status=succeeded runs that produced no output (the agent crashed before
+    # writing the OUTPUT span attribute) — the consumer UI uses this to
+    # detect silent failures and stop spinning.
     if not (run.output and run.output.get("digest")):
-        if run.status in ("running", "failed"):
-            inp: dict[str, Any] = run.input or {}
-            return {
-                "run_id": run.id,
-                "research_interest": inp.get("research_interest"),
-                "date_from": inp.get("date_from"),
-                "date_to": inp.get("date_to"),
-                "generated_at": None,
-                "digest": "",
-                "candidates": [],
-                "sections": [],
-                "figures": {},
-                "status": run.status,
-            }
-        raise HTTPException(404, f"digest for run {run_id} not found")
+        inp: dict[str, Any] = run.input or {}
+        out: dict[str, Any] = run.output or {}
+        return {
+            "run_id": run.id,
+            "research_interest": inp.get("research_interest"),
+            "date_from": inp.get("date_from"),
+            "date_to": inp.get("date_to"),
+            "generated_at": run.ended_at.isoformat() if run.ended_at else None,
+            "digest": "",
+            "candidates": out.get("candidates") or [],
+            "sections": out.get("sections") or [],
+            "figures": out.get("figures") or {},
+            "status": run.status,
+            "error": out.get("error"),
+        }
 
     inp: dict[str, Any] = run.input or {}
     output: dict[str, Any] = run.output or {}
@@ -95,6 +98,7 @@ async def get_digest(run_id: str) -> dict:
         "sections": output.get("sections") or [],
         "figures": output.get("figures") or {},
         "status": run.status,
+        "error": output.get("error"),
     }
 
 
