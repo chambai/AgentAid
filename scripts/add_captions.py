@@ -31,16 +31,24 @@ FINAL = DOCS / "walkthrough.mp4"
 FONT_BOLD = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
 FONT_REGULAR = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
 
-# (start_s, end_s, caption). Times are seconds in the source UI tour.
-# Captions describe what AgentAid does at each section — the product surface,
-# not the user's actions.
+# (start_s, end_s, caption). Times are seconds in the source UI tour
+# (docs/walkthrough-uncaptioned.mp4). Captions describe what AgentAid does at
+# each section — the product surface, not the user's actions.
+#
+# The tour starts on the *consumer* surface (researcher reading the agent's
+# output) and then crosses to the *platform* surface (engineer monitoring
+# the agent), so the contrast between the two stakeholders lands first.
 CAPTIONS: list[tuple[float, float, str]] = [
-    (0.5,  8.5,  "AgentAid surfaces drift across agent inputs, tool-call patterns, and eval scores"),
-    (9.0, 15.0,  "Multi-agent traces — planner spawns workers in parallel, every tool call instrumented"),
-    (15.0, 20.0, "Spans follow OpenTelemetry GenAI semantic conventions — framework-agnostic"),
-    (20.0, 27.5, "ADWIN online change detection on streaming eval scores, with adaptive thresholds"),
-    (28.0, 39.0, "Compare runs by score deltas, cost, and tool-call distribution shift (PSI)"),
-    (39.0, 42.5, "Eval-first orchestration — typed Pydantic results from LLM judges and invariants"),
+    # Consumer surface — researcher
+    (0.5,   4.5,  "Consumer surface — researchers read the digests the agent produced. No platform chrome."),
+    (5.5,  10.5,  "The agent's actual output: Markdown digest, paper summaries, scores. This is what the customer came for."),
+    # Platform surface — engineer
+    (12.0, 17.5,  "Platform surface — AgentAid surfaces drift across inputs, tool-call patterns, and eval scores"),
+    (18.5, 23.5,  "Multi-agent traces — planner spawns workers in parallel, every tool call instrumented"),
+    (24.0, 28.0,  "Spans follow OpenTelemetry GenAI semantic conventions — framework-agnostic"),
+    (28.5, 33.5,  "ADWIN online change detection on streaming eval scores, with adaptive thresholds"),
+    (34.0, 42.5,  "Compare runs by score deltas, cost, and tool-call distribution shift (PSI)"),
+    (43.0, 46.5,  "Eval-first orchestration — typed Pydantic results from LLM judges and invariants"),
 ]
 
 # Each layer frame: a focused PUML render (rendered separately) + skill caption.
@@ -69,22 +77,21 @@ LAYER_FRAMES: list[dict] = [
 ]
 
 
-def _esc(text: str) -> str:
-    """Escape characters drawtext interprets specially."""
-    out = text
-    out = out.replace("\\", r"\\")
-    out = out.replace(":", r"\:")
-    out = out.replace(",", r"\,")
-    out = out.replace("'", r"\'")
-    out = out.replace("%", r"\%")
-    return out
+def _write_textfile(text: str, path: Path) -> Path:
+    """Write caption text to a file so drawtext can read via textfile= and
+    bypass single-quote / colon / comma / apostrophe escaping rules. drawtext
+    treats textfile contents as opaque text — no interpretation needed.
+    """
+    path.write_text(text, encoding="utf-8")
+    return path
 
 
-def _build_caption_filter() -> str:
+def _build_caption_filter(textfile_dir: Path) -> str:
     parts = []
-    for start, end, text in CAPTIONS:
+    for i, (start, end, text) in enumerate(CAPTIONS):
+        tf = _write_textfile(text, textfile_dir / f"caption_{i}.txt")
         parts.append(
-            f"drawtext=fontfile={FONT_BOLD}:text='{_esc(text)}':"
+            f"drawtext=fontfile={FONT_BOLD}:textfile={tf}:"
             f"fontcolor=white:fontsize=22:"
             f"box=1:boxcolor=black@0.72:boxborderw=12:"
             f"x=(w-text_w)/2:y=h-text_h-28:"
@@ -93,11 +100,11 @@ def _build_caption_filter() -> str:
     return ",".join(parts)
 
 
-def make_captioned_tour(out_path: Path) -> None:
+def make_captioned_tour(out_path: Path, textfile_dir: Path) -> None:
     cmd = [
         "ffmpeg", "-y", "-loglevel", "error",
         "-i", str(BACKUP),
-        "-vf", _build_caption_filter(),
+        "-vf", _build_caption_filter(textfile_dir),
         "-c:v", "libx264", "-pix_fmt", "yuv420p",
         "-r", "30", "-crf", "23", "-preset", "medium",
         "-movflags", "+faststart",
@@ -106,7 +113,7 @@ def make_captioned_tour(out_path: Path) -> None:
     subprocess.run(cmd, check=True)
 
 
-def make_layer_clip(layer: dict, out_path: Path) -> None:
+def make_layer_clip(layer: dict, out_path: Path, textfile_dir: Path) -> None:
     """Render a layer-focused PUML diagram (already a PNG) into a 1280x720
     frame: white background area for the diagram, 100 px black bar at the
     bottom carrying a two-line skill caption. Writes a `duration`-second
@@ -115,19 +122,20 @@ def make_layer_clip(layer: dict, out_path: Path) -> None:
     image: Path = layer["image"]
     if not image.exists():
         raise SystemExit(f"error: {image} not found — render layer puml first")
-    line1, line2 = _esc(layer["line1"]), _esc(layer["line2"])
+    tf1 = _write_textfile(layer["line1"], textfile_dir / f"{layer['name']}_line1.txt")
+    tf2 = _write_textfile(layer["line2"], textfile_dir / f"{layer['name']}_line2.txt")
     # Filter chain on the looped still image:
-    #   1. scale to fit within 1240x600 keeping aspect (force_original_aspect_ratio=decrease)
+    #   1. scale to fit within 1240x600 keeping aspect
     #   2. pad to 1280x620 with white background, image centered
     #   3. extend bottom by 100 px black bar -> 1280x720
-    #   4. drawtext line 1 (bold) + line 2 (regular)
+    #   4. drawtext line 1 (bold) + line 2 (regular) from textfiles
     vf = (
         f"scale=1240:600:force_original_aspect_ratio=decrease,"
         f"pad=1280:620:(1280-iw)/2:(620-ih)/2:white,"
         f"pad=1280:720:0:0:black,"
-        f"drawtext=fontfile={FONT_BOLD}:text='{line1}':"
+        f"drawtext=fontfile={FONT_BOLD}:textfile={tf1}:"
         f"fontcolor=white:fontsize=20:x=(w-text_w)/2:y=h-72,"
-        f"drawtext=fontfile={FONT_REGULAR}:text='{line2}':"
+        f"drawtext=fontfile={FONT_REGULAR}:textfile={tf2}:"
         f"fontcolor=white:fontsize=18:x=(w-text_w)/2:y=h-38"
     )
     cmd = [
@@ -181,16 +189,18 @@ def main() -> None:
 
     with tempfile.TemporaryDirectory() as td:
         tmp = Path(td)
+        textfile_dir = tmp / "captions"
+        textfile_dir.mkdir()
         captioned = tmp / "captioned-tour.mp4"
         layer_clips: list[Path] = []
 
         print(f"→ burning captions into UI tour → {captioned.name}")
-        make_captioned_tour(captioned)
+        make_captioned_tour(captioned, textfile_dir)
 
         for layer in LAYER_FRAMES:
             out = tmp / f"layer-{layer['name']}.mp4"
             print(f"→ rendering layer frame: {layer['name']}")
-            make_layer_clip(layer, out)
+            make_layer_clip(layer, out, textfile_dir)
             layer_clips.append(out)
 
         print(f"→ concatenating {1 + len(layer_clips)} clips → {FINAL.relative_to(REPO)}")
