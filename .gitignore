@@ -35,3 +35,6 @@ agentaid.db
 # Secrets
 .env
 .env.local
+
+# Local-only backup of the uncaptioned walkthrough (re-created by add_captions.py)
+docs/walkthrough-uncaptioned.mp4
