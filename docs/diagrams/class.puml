@@ -1,0 +1,142 @@
+@startuml class
+!theme plain
+skinparam backgroundColor white
+skinparam classBackgroundColor #ffffff
+skinparam classBorderColor #555555
+skinparam packageBackgroundColor #fafafa
+
+title AgentAid — Domain Model
+
+package "agentaid.models  (shared Pydantic types)" {
+  enum EvalMode {
+    ONLINE
+    REGRESSION
+    INVARIANT
+  }
+
+  enum DriftSignal {
+    INPUT
+    TOOL_CALL
+    QUALITY
+  }
+
+  class Run {
+    +id : str
+    +agent_name : str
+    +started_at : datetime
+    +ended_at : datetime?
+    +status : RunStatus
+    +input : dict?
+    +output : dict?
+    +prompt_sha : str?
+    +model : str?
+    +total_cost : float
+    +total_tokens : int
+  }
+
+  class Span {
+    +id : str
+    +run_id : str
+    +parent_span_id : str?
+    +name : str
+    +role : str?
+    +started_at : datetime
+    +ended_at : datetime?
+    +attributes : dict
+    +events : list
+  }
+
+  class EvalResult {
+    +run_id : str
+    +eval_name : str
+    +mode : EvalMode
+    +score : float [0..1]
+    +label : str?
+    +rationale : str?
+    +created_at : datetime
+  }
+
+  class DriftState {
+    +signal : DriftSignal
+    +detector_name : str
+    +window : str
+    +value : float
+    +threshold : float
+    +is_drifted : bool
+    +updated_at : datetime
+  }
+
+  class Golden {
+    +id : str
+    +input : dict
+    +expected : dict
+  }
+}
+
+package "agentaid.drift  (pluggable detectors)" {
+  interface DriftDetector <<Protocol>> {
+    +name : str
+    +update(value) : bool
+    +is_drifted() : bool
+    +value() : float
+    +threshold() : float
+    +reset() : void
+  }
+
+  class ADWIN {
+    -delta : float
+    -window : deque<float>
+    +update(v : float) : bool
+  }
+
+  class MMDDetector {
+    -reference : ndarray
+    -gamma : float
+    +update(v : ndarray) : bool
+  }
+
+  class PSIDetector {
+    -reference : dict<str,float>
+    -window : deque<str>
+    +update(v : str) : bool
+  }
+
+  ADWIN ..|> DriftDetector
+  MMDDetector ..|> DriftDetector
+  PSIDetector ..|> DriftDetector
+}
+
+package "agentaid.eval  (definition surface)" {
+  class EvalSpec {
+    +name : str
+    +mode : EvalMode
+    +fn : EvalFn
+    +judge_model : str?
+  }
+
+  class Registry {
+    +register(spec) : void
+    +get_eval(name) : EvalSpec
+    +evals_for_mode(mode) : list
+  }
+
+  class "@agentaid.eval(...)" as decorator <<decorator>>
+
+  decorator ..> EvalSpec : creates
+  decorator ..> Registry : registers
+  Registry o-- "0..*" EvalSpec
+}
+
+EvalSpec ..> Run : input
+EvalSpec ..> EvalResult : returns
+Run o-- "0..*" Span
+Run o-- "0..*" EvalResult
+
+note bottom of DriftDetector
+  Detectors are server-side and
+  pluggable — adding a new method
+  is a new class + registration,
+  no platform changes needed.
+end note
+
+@enduml

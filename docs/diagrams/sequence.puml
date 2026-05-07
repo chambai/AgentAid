@@ -1,0 +1,67 @@
+@startuml sequence
+!theme plain
+skinparam backgroundColor white
+skinparam sequenceMessageAlign center
+skinparam sequenceParticipantBackgroundColor #ffffff
+skinparam ArrowColor #555555
+
+title AgentAid — End-to-end Run Lifecycle
+
+actor User
+participant "Reference Agent\n(Planner + Worker)" as Agent
+participant "agentaid-py\nSDK / OTel" as SDK
+participant "Server\n/ingest" as Ingest
+database "SQLite" as DB
+participant "Eval\nOrchestrator" as Eval
+participant "Drift\nWorkers" as Drift
+participant "Frontend  /" as Web
+
+User -> Agent : research_interest, date_window
+activate Agent
+Agent -> Agent : planner: search_arxiv +\nfetch_metadata × N +\nscore_candidate × N
+Agent -> Agent : dispatch_worker × top-3\n(parallel async)
+Agent -> Agent : compose_digest()
+Agent -> SDK : emit otel/genai spans\n(role=planner|worker|tool)
+deactivate Agent
+
+SDK -> Ingest : HTTP POST  {spans:[…]}\n(BatchSpanProcessor)
+activate Ingest
+Ingest -> DB : parse_span × N\nderive_run() · upsert
+Ingest -> Eval : bg.add_task(run_invariants)
+Ingest -> Eval : bg.add_task(run_online)
+Ingest --> SDK : 202 Accepted
+deactivate Ingest
+
+activate Eval
+Eval -> DB : SELECT Run
+Eval -> Eval : structural_completeness\ncost_within_budget\n(deterministic, in-process)
+Eval -> Eval : relevance_judge\nfaithfulness_judge\n(LLM call → Anthropic)
+Eval -> DB : INSERT EvalResult × 4
+deactivate Eval
+
+== every 5 s tick ==
+activate Drift
+Drift -> DB : SELECT recent EvalResult
+Drift -> Drift : ADWIN.update(score)
+Drift -> DB : SELECT recent Span\n(role + parent)
+Drift -> Drift : PSIDetector.update(tool_name)
+Drift -> DB : SELECT recent Run.input
+Drift -> Drift : MMDDetector.update(embedding)
+Drift -> DB : INSERT DriftStateRow × 3
+deactivate Drift
+
+== reviewer opens UI ==
+User -> Web : open /
+activate Web
+Web -> Ingest : GET /drift
+Web -> Ingest : GET /runs?limit=10
+Web --> User : 3 signal cards\n+ recent runs list
+User -> Web : click /runs/:id
+Web -> Ingest : GET /runs/:id
+Web --> User : Gantt + spans
+User -> Web : click /compare?a&b
+Web -> Ingest : GET /compare
+Web --> User : scorecard +\ntool-call distribution shift
+deactivate Web
+
+@enduml
