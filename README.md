@@ -26,7 +26,7 @@ the platform on real-shaped traffic and to drive the demo.
 
 ## Architecture
 
-![Architecture](docs/screenshots/06-architecture.png)
+![Architecture](docs/diagrams/architecture.png)
 
 Three layers, OTel/GenAI at the seam between them:
 
@@ -36,6 +36,17 @@ Three layers, OTel/GenAI at the seam between them:
    evals async, runs three drift-detector workers on a 5-second tick.
 3. **Frontend layer** — Vite + React + TypeScript. Drift-first home, Gantt trace
    detail, summary-led run comparison, drift detail × 3, eval results, datasets.
+
+### Domain model and run lifecycle
+
+| Domain model | End-to-end run lifecycle |
+|---|---|
+| ![Class diagram](docs/diagrams/class.png) | ![Sequence diagram](docs/diagrams/sequence.png) |
+
+Sources: [`docs/diagrams/architecture.puml`](docs/diagrams/architecture.puml) ·
+[`class.puml`](docs/diagrams/class.puml) ·
+[`sequence.puml`](docs/diagrams/sequence.puml). Regenerate PNGs with
+`java -jar plantuml.jar -tpng docs/diagrams/*.puml`.
 
 ## Why these choices
 
