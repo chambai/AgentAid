@@ -101,20 +101,25 @@ async def main() -> None:
 
         # ── Platform surface (engineer) ────────────────────────────
 
-        # 11–18 s — Drift home: three signals firing
+        # 11–20 s — Drift home: four signals firing (input, tool-call,
+        # quality, attribution). Attribution is the new card; we hover it
+        # last so the surrounding caption can call it out as the
+        # FADMON-style fourth signal without the eye fighting earlier
+        # hovers.
         await page.goto(f"{PLATFORM_WEB}/", wait_until="networkidle")
         await page.wait_for_timeout(2000)
         for sel in [
             "a:has-text('Input drift')",
             "a:has-text('Tool-call drift')",
             "a:has-text('Quality drift')",
+            "a:has-text('Attribution drift')",
         ]:
             try:
                 await page.locator(sel).hover(timeout=1500)
-                await page.wait_for_timeout(1200)
+                await page.wait_for_timeout(1100)
             except Exception:
                 pass
-        await page.wait_for_timeout(800)
+        await page.wait_for_timeout(600)
 
         # 18–28 s — Trace detail (Gantt) with a click on a worker span
         await page.goto(f"{PLATFORM_WEB}/runs/{TRACE_ID}", wait_until="networkidle")
@@ -131,6 +136,11 @@ async def main() -> None:
 
         # 28–34 s — Drift detail (quality) — chart with threshold
         await page.goto(f"{PLATFORM_WEB}/drift/quality", wait_until="networkidle")
+        await page.wait_for_timeout(5500)
+
+        # 34–40 s — Drift detail (attribution) — the new fourth signal,
+        # PSI on the per-paper citation-weight distribution.
+        await page.goto(f"{PLATFORM_WEB}/drift/attribution", wait_until="networkidle")
         await page.wait_for_timeout(5500)
 
         # 34–43 s — Run comparison — scorecard + tool-call distribution shift

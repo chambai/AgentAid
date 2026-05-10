@@ -39,17 +39,21 @@ FONT_REGULAR = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
 # output) and then crosses to the *platform* surface (engineer monitoring
 # the agent), so the contrast between the two stakeholders lands first.
 CAPTIONS: list[tuple[float, float, str]] = [
-    # Consumer surface — researcher
+    # Timings calibrated against the actual 58 s recording produced by
+    # scripts/record_walkthrough.py with the four-drift-card flow. Sample
+    # frames at t=17/24/37/43/49/56 to verify alignment if the recording
+    # script changes.
+    # Consumer surface — researcher (~0–15 s)
     (0.5,   5.5,  "Search form — researchers initiate a digest by typing a research interest"),
     (6.5,  10.5,  "Existing digests are listed below — every prior agent run is one click away"),
-    (11.5, 16.5,  "Each digest opens to the rendered Markdown — the agent's actual output for the customer"),
-    # Platform surface — engineer
-    (18.0, 23.5,  "Platform surface — AgentAid surfaces drift across inputs, tool-call patterns, and eval scores"),
-    (24.5, 29.5,  "Multi-agent traces — planner spawns workers in parallel, every tool call instrumented"),
-    (30.0, 34.0,  "Spans follow OpenTelemetry GenAI semantic conventions — framework-agnostic"),
-    (34.5, 39.5,  "ADWIN online change detection on streaming eval scores, with adaptive thresholds"),
-    (40.0, 48.5,  "Compare runs by score deltas, cost, and tool-call distribution shift (PSI)"),
-    (49.0, 52.5,  "Eval-first orchestration — typed Pydantic results from LLM judges and invariants"),
+    (11.5, 15.0,  "Each digest opens to the rendered Markdown — the agent's actual output for the customer"),
+    # Platform surface — engineer (~16 s onward)
+    (16.5, 24.5,  "Platform surface — four drift signals: inputs, tool-call patterns, eval scores, AND citation attribution"),
+    (25.5, 31.0,  "Multi-agent traces — planner spawns workers in parallel; every tool call instrumented (OTel/GenAI)"),
+    (31.5, 37.5,  "Quality drift: ADWIN online change detection on streaming eval scores"),
+    (38.0, 43.5,  "Attribution drift (FADMON-style) — PSI on per-paper citation-weight distribution"),
+    (44.5, 51.5,  "Compare runs by score deltas, cost, and tool-call distribution shift (PSI)"),
+    (52.0, 58.0,  "Eval-first orchestration — typed Pydantic results from LLM judges and invariants"),
 ]
 
 # Each layer frame: a focused PUML render (rendered separately) + skill caption.
@@ -65,7 +69,7 @@ LAYER_FRAMES: list[dict] = [
         "name": "server",
         "image": DOCS / "diagrams" / "server-layer.png",
         "line1": "Server Layer  —  Python  ·  FastAPI  ·  SQLModel async  ·  OTel/GenAI ingestion",
-        "line2": "Eval orchestrator (Mode 1 + 3)  ·  drift workers ADWIN / MMD / PSI  ·  Mode 2 regression",
+        "line2": "Eval orchestrator (Mode 1 + 3)  ·  drift workers ADWIN / MMD / PSI / Attribution-PSI",
         "duration": 3.0,
     },
     {

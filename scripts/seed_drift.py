@@ -5,8 +5,8 @@ Usage:
 
 Produces 100 synthetic runs across two epochs (0..49 stable, 50..99 shifted),
 600+ spans, 100 eval results — designed to drive ADWIN (quality), PSI
-(tool-call), and MMD (input embedding hash) into the drifted state on the
-next worker tick.
+(tool-call), MMD (input embedding hash), and Attribution-PSI (per-paper
+citation distribution) into the drifted state on the next worker tick.
 """
 from __future__ import annotations
 
@@ -16,12 +16,18 @@ import os
 import random
 from datetime import datetime, timedelta
 
+# Each epoch carries the canonical "papers cited" the planner is supposed to
+# rest on. Keeping the two sets disjoint guarantees the citation-weight
+# distribution between epoch-1 (reference) and epoch-2 (recent) shifts
+# enough to push the attribution PSI well past its 0.2 threshold.
 EPOCHS = [
     {"interest": "concept drift in streaming ML",
-     "tools": ["fetch_paper", "extract_figures", "summarize"]},
+     "tools": ["fetch_paper", "extract_figures", "summarize"],
+     "papers": ["2401.00010", "2401.00011", "2401.00012"]},
     {"interest": "transformer alignment in robotics",
      "tools": ["fetch_paper", "extract_figures", "extract_figures",
-               "extract_figures", "summarize"]},
+               "extract_figures", "summarize"],
+     "papers": ["2402.00020", "2402.00021", "2402.00022"]},
 ]
 
 async def seed(db_url: str | None) -> None:
@@ -46,13 +52,21 @@ async def seed(db_url: str | None) -> None:
             run_id = f"seed-{i:04d}"
             run_started = base + timedelta(minutes=i * 5)
             run_ended = run_started + timedelta(seconds=12)
+            # Synthesise per-paper citation weights with a touch of noise so
+            # the attribution distribution isn't a perfect step-function and
+            # the chart looks believable.
+            attribution = {p: 1.0 / len(epoch["papers"]) + random.uniform(-0.05, 0.05)
+                           for p in epoch["papers"]}
+            total = sum(attribution.values())
+            attribution = {k: v / total for k, v in attribution.items()}
             s.add(Run(id=run_id, agent_name="arxiv-planner",
                       started_at=run_started, ended_at=run_ended,
                       status="succeeded",
                       total_cost=0.02 + random.uniform(0, 0.005),
                       total_tokens=2000 + random.randint(0, 500),
                       input={"research_interest": epoch["interest"]},
-                      output={"digest": "## P\n- summary\n2401.00001"}))
+                      output={"digest": "## P\n- summary\n2401.00001",
+                              "attribution": attribution}))
             s.add(Span(id=f"{run_id}-p", run_id=run_id, parent_span_id=None,
                        name="planner", role="planner",
                        started_at=run_started, ended_at=run_ended,
