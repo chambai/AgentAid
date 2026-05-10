@@ -1,4 +1,4 @@
-# AgentAid
+# Drift Aware Agents
 
 > An information searching tool and a drift-aware observability and evaluation platform for production AI agents.
 > Beyond standard traces and metrics, it treats distribution shift across inputs, tool-call patterns, eval scores, and citation attribution as first-class monitoring signals. Application-agnostic and front-end independent.
