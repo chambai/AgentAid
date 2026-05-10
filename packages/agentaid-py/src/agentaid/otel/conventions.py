@@ -22,3 +22,4 @@ class AgentAid(StrEnum):
     EVAL_RESULT = "agentaid.eval_result"
     INPUT = "agentaid.input"
     OUTPUT = "agentaid.output"
+    ATTRIBUTION = "agentaid.attribution"

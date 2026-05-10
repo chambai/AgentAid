@@ -8,6 +8,7 @@ const TITLES: Record<DriftSignal, string> = {
   input: "Input drift (MMD on query embeddings)",
   tool_call: "Tool-call distribution drift (PSI per role)",
   quality: "Quality drift (ADWIN on relevance_judge)",
+  attribution: "Attribution drift (PSI on citation-weight distribution)",
 };
 
 export default function DriftDetail() {

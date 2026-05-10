@@ -12,7 +12,25 @@ from opentelemetry import trace
 from opentelemetry.trace import StatusCode
 
 from . import tools as agent_tools
-from .planner import PlannerInput, build_planner_agent, figures_ctx
+from .planner import PaperSection, PlannerInput, build_planner_agent, figures_ctx
+
+
+def _compute_citation_attribution(sections: list[PaperSection]) -> dict[str, float]:
+    """Per-paper share of the digest body length, normalised to sum to 1.
+
+    Used by the attribution drift worker (server-side) to detect shifts in
+    *which sources* the agent leans on, even when output quality and
+    tool-call patterns look unchanged. Section length is the cheapest
+    available proxy for "how much this paper contributed"; embedding-based
+    attribution is a follow-up.
+    """
+    weights: dict[str, float] = {}
+    for s in sections:
+        weights[s.paper_id] = weights.get(s.paper_id, 0.0) + len(s.summary or "")
+    total = sum(weights.values())
+    if total <= 0:
+        return {}
+    return {k: v / total for k, v in weights.items()}
 
 
 async def _main(research_interest: str, date_from: str, date_to: str) -> None:
@@ -91,6 +109,7 @@ async def _main(research_interest: str, date_from: str, date_to: str) -> None:
             tool_figures = agent_tools.get_run_figures()
             merged_figures = {**llm_figures, **ctx_figures, **tool_figures}
 
+            attribution = _compute_citation_attribution(res.output.sections)
             root.set_attribute(
                 AgentAid.OUTPUT,
                 json.dumps({
@@ -98,8 +117,11 @@ async def _main(research_interest: str, date_from: str, date_to: str) -> None:
                     "candidates": [c.model_dump() for c in res.output.candidates],
                     "sections": [s.model_dump() for s in res.output.sections],
                     "figures": merged_figures,
+                    "attribution": attribution,
                 }),
             )
+            if attribution:
+                root.set_attribute(AgentAid.ATTRIBUTION, json.dumps(attribution))
         finally:
             figures_ctx.reset(figures_token)
 

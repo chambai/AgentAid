@@ -36,6 +36,7 @@ packages/agentaid-web/*.js
 # Local SQLite databases
 *.sqlite
 *.sqlite-journal
+*.db-journal
 agentaid.db
 
 # Secrets

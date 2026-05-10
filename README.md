@@ -2,8 +2,8 @@
 
 > A drift-aware observability and evaluation platform for production AI agents,
 > built around the thesis that distribution drift — on agent inputs, tool-call
-> patterns, and eval scores — is a first-class signal that traces and metrics
-> alone don't surface.
+> patterns, eval scores, and citation attribution — is a first-class signal
+> that traces and metrics alone don't surface.
 
 ![Walkthrough](docs/walkthrough.gif)
 
@@ -19,8 +19,15 @@ AgentAid ingests OpenTelemetry traces using the GenAI semantic conventions
 - **Trace storage** — runs, spans, and tool-call structure, queryable via REST.
 - **Eval framework** — three operating modes (online sampled, offline regression,
   trace invariants) on a single typed definition surface; four built-in templates.
-- **Drift detection** — three signals (input embeddings, tool-call distribution,
-  eval-score quality) with pluggable detectors (ADWIN, MMD, PSI today).
+- **Drift detection** — four signals with pluggable detectors:
+  - **Input drift** — MMD on query embeddings (catches research-interest distribution shift)
+  - **Tool-call drift** — PSI on per-role tool-call frequencies (catches the agent picking different tools)
+  - **Quality drift** — ADWIN on streaming `relevance_judge` scores (catches gradual eval regression)
+  - **Attribution drift** — PSI on the per-paper citation-weight distribution
+    (catches the agent shifting which sources it relies on, even when the other
+    three signals stay flat — a FADMON-style attribution-monitoring signal,
+    reconstructed for closed-weight LLMs from section-length weights rather
+    than gradient attributions)
 
 The included **arXiv research agent** is the reference workload — a multi-agent
 (planner + worker) pipeline with multi-modal figure extraction, used to exercise
@@ -67,10 +74,10 @@ Three layers, OTel/GenAI at the seam between them:
 1. **Agent + SDK layer** — Pydantic AI reference agent and a bare-Anthropic-SDK
    example. Both emit OTel/GenAI spans via the `agentaid` Python or TypeScript SDK.
 2. **Server layer** — FastAPI + SQLModel + SQLite. Ingests spans, runs LLM-judge
-   evals async, runs three drift-detector workers on a 5-second tick.
+   evals async, runs four drift-detector workers on a 5-second tick.
 3. **Frontend layer** — two Vite + React + TS apps:
    - `agentaid-web` for the platform (drift home, Gantt trace detail, run
-     comparison, drift detail × 3, eval results, datasets).
+     comparison, drift detail × 4, eval results, datasets).
    - `arxiv-digest-web` for consumers reading the agent's output (digest
      list + per-digest reading view).
 
@@ -93,6 +100,11 @@ Sources: [`docs/diagrams/architecture.puml`](docs/diagrams/architecture.puml) ·
   enough to debug into and instrument cleanly.
 - **Hand-rolled ADWIN/MMD/PSI** instead of `scikit-multiflow` → the math is
   visible and the dependency footprint stays small.
+- **Citation-weight attribution** (FADMON-style, adapted for closed-weight LLMs) →
+  computed at the agent layer from `PlannerResult.sections` length weights, persisted
+  as `agentaid.attribution` on the root span and inside `run.output`, then
+  PSI-compared against a frozen reference distribution by the attribution drift
+  worker. Catches reasoning-source shifts that input/tool/quality drift miss.
 - **Eval-first orchestration** → eval results are first-class typed objects;
   drift detectors subscribe to eval streams, so quality drift is wired to the
   same numbers a developer reasons about.

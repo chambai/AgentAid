@@ -10,6 +10,7 @@ const LABEL: Record<DriftSignal, string> = {
   input: "Input drift",
   tool_call: "Tool-call drift",
   quality: "Quality drift",
+  attribution: "Attribution drift",
 };
 
 export default function DriftSignalCard({ signal, state }: Props) {

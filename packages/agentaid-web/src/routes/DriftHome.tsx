@@ -4,7 +4,7 @@ import DriftSignalCard from "../components/DriftSignalCard";
 import RunRow from "../components/RunRow";
 import type { DriftSignal, DriftState } from "../api/types";
 
-const SIGNALS: DriftSignal[] = ["input", "tool_call", "quality"];
+const SIGNALS: DriftSignal[] = ["input", "tool_call", "quality", "attribution"];
 
 export default function DriftHome() {
   const drift = useQuery({ queryKey: ["drift"], queryFn: () => api.driftState(), refetchInterval: 5000 });
@@ -18,7 +18,7 @@ export default function DriftHome() {
       <div style={{ fontSize: 11, opacity: 0.7, textTransform: "uppercase", marginBottom: 8 }}>
         Drift signals · last 7 days
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 24 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 24 }}>
         {SIGNALS.map(s => <DriftSignalCard key={s} signal={s} state={stateBySignal.get(s)} />)}
       </div>
       <div style={{ fontSize: 11, opacity: 0.7, textTransform: "uppercase", marginBottom: 8 }}>

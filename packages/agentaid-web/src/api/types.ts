@@ -29,7 +29,7 @@ export interface Span {
 export interface RunDetail { run: Run; spans: Span[] }
 export interface RunsList { runs: Run[] }
 
-export type DriftSignal = "input" | "tool_call" | "quality";
+export type DriftSignal = "input" | "tool_call" | "quality" | "attribution";
 
 export interface DriftState {
   signal: DriftSignal;
