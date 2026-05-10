@@ -9,15 +9,6 @@
 
 ![Drift home](docs/screenshots/01-drift-home.png)
 
-Three first-class systems on top of an OpenTelemetry / GenAI ingestion layer:
-trace storage with full run / span / tool-call detail; a typed eval framework
-with three operating modes (online sampled, offline regression, trace
-invariants) and four built-in templates; and four drift detectors —
-**input** (MMD on query embeddings), **tool-call** (PSI on per-role tool
-frequencies), **quality** (ADWIN on streaming judge scores), and
-**attribution** (PSI on per-paper citation weights, a FADMON-style signal
-adapted for closed-weight LLMs).
-
 The bundled multi-agent arXiv research assistant (planner + worker, multi-modal
 figure extraction) is the reference workload — exercising the platform on
 real-shaped traffic and driving the walkthrough above.
