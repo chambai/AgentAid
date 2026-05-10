@@ -40,30 +40,16 @@ Three layers, OTel/GenAI at the seam between them:
 
 ## Future improvements
 
-- **Retry + backoff + timeout on LLM calls.** Today the agent fails fast and
-  surfaces the error in the UI; production-grade needs bounded retries and a
-  hard timeout on `agent.run()`.
-- **Embedding-based attribution** as a second-tier drift signal alongside
-  citation-weight. Catches paraphrased grounding that the section-length proxy
-  misses.
-- **Surface judge rationale on Trace Detail.** `judge.py` returns it and the
-  DB stores it, but the UI never shows the most interpretable LLM-as-Judge
-  output.
-- **Reflexion / in-loop self-critique.** Eval judges are post-hoc only today.
-- **Pairwise / rank-based judging** for the run-comparison view, instead of
-  absolute scores.
-- **Production multi-tenant build-out** — edge agent + sanitised egress +
-  per-tenant data plane (designed in
-  [`docs/architecture/multi-tenant.md`](docs/architecture/multi-tenant.md)).
+- **Retry + backoff + timeout on LLM calls.** Currently agent failures are shown in the UI,
+- add bounded retries and hard timeout on `agent.run()`.
+- **Embedding-based attribution** - catch where the agent has paraphrased from a source rather than citing it directly.
+- **Reflexion / in-loop self-critique.** Agent judges currently run after the agent's finished, get the agents to judge its own work mid-run and self-correct before producing a final answer.
+- **Pairwise / rank-based judging** - instead of scoring a single run in isolation ("this scores 7/10"), compare two runs against each other ("run A is better than run B at citing sources"). Could be more reliable because it's easier to judge relative quality than absolute quality.
+- **Production multi-tenant build-out** - make the platform usable by multiple separate customers at once, where each customer's data is kept isolated, the agent runs at the edge (closer to the user), and anything leaving the system has sensitive information stripped out first.
 - **Real-time WebSocket trace streaming** instead of 5-second polling.
-- **Additional drift methods** (KS, Wasserstein, page-level changepoint).
-  Plugin interface already designed for this.
+- **Additional drift methods**
 
-## More detail
-
-Stakeholder split, architecture diagrams, design decisions, quick start,
-screenshots, scope boundaries, multi-tenant roadmap, and repository layout
-live in [`DETAILS.md`](DETAILS.md).
+More detail in [`DETAILS.md`](DETAILS.md).
 
 ## License
 
