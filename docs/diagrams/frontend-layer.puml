@@ -2,20 +2,30 @@
 !theme plain
 skinparam backgroundColor white
 skinparam componentStyle rectangle
-skinparam linetype ortho
+skinparam dpi 130
 skinparam packageBackgroundColor #f3fff3
 skinparam componentBackgroundColor #ffffff
 skinparam ArrowColor #555555
+skinparam defaultFontName Helvetica
+skinparam defaultFontSize 15
+skinparam packageFontSize 17
+skinparam packageFontStyle bold
+skinparam nodesep 50
+skinparam ranksep 70
+skinparam padding 8
 
-title Frontend Layer (Vite + React + TS)
+title Frontend Layer
 
 [Server  REST API] as Api
 
+' Per-route detail. Stack technology bullets are carried by the
+' layer-frame caption underneath the image (set in scripts/add_captions.py)
+' so the diagram stays focused on routes and their REST calls.
 package "Frontend Layer" #f3fff3 {
   [Drift Home  /] as Home
   [Trace Detail\n/runs/:id] as Trace
   [Run Comparison\n/compare] as Compare
-  [Drift Detail × 3\n/drift/:signal] as DriftPage
+  [Drift Detail x 4\n/drift/:signal] as DriftPage
   [Eval Results  /evals] as Evals
   [Datasets · Run List] as Other
 }
@@ -26,11 +36,5 @@ Compare --> Api : GET /compare
 DriftPage --> Api : GET /drift/series/:signal
 Evals --> Api : GET /evals/recent
 Other --> Api : /datasets, /regressions
-
-note right of Api
-  Drift-first information architecture —
-  the home page is the platform's thesis,
-  every page is one click away.
-end note
 
 @enduml

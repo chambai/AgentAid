@@ -2,37 +2,32 @@
 !theme plain
 skinparam backgroundColor white
 skinparam componentStyle rectangle
-skinparam linetype ortho
+skinparam dpi 130
 skinparam packageBackgroundColor #f4f8ff
 skinparam componentBackgroundColor #ffffff
 skinparam ArrowColor #555555
+skinparam defaultFontName Helvetica
+skinparam defaultFontSize 15
+skinparam packageFontSize 17
+skinparam packageFontStyle bold
+skinparam nodesep 60
+skinparam ranksep 80
+skinparam padding 8
 
 title Agent + SDK Layer
 
+left to right direction
+
 package "Agent + SDK Layer" #f4f8ff {
-  [Reference Agent\n(Pydantic AI)] as Agent
-  [Bare Anthropic\nSDK Example] as Bare
-  component "agentaid-py SDK" as PySdk
-  component "agentaid-ts SDK" as TsSdk
-  database "Mock arXiv\n(default)" as Mock
-  database "Real arXiv API\n(feature flag)" as Real
+  [Reference Agent\n\n- Pydantic AI\n- planner + worker\n- multi-modal vision\n- mock arXiv default,\n  real arXiv feature-flagged] as Agent
+  [Bare Anthropic\nSDK Example\n\nframework-agnostic\nproof point] as Bare
+  component "agentaid SDK\n(Python + TypeScript)\n\nOTel/GenAI emitter" as Sdk
+
+  Agent --> Sdk : emit\notel/genai spans
+  Bare  --> Sdk : manual\notel/genai
 }
 
 [Server  /ingest] as Ingest
-
-Agent --> Mock : default
-Agent ..> Real : if AGENTAID_USE_REAL_ARXIV
-Agent --> PySdk : emit otel/genai spans
-Bare --> PySdk : manual otel/genai
-
-PySdk --> Ingest : HTTP POST  {spans:[…]}
-TsSdk --> Ingest : HTTP POST  {spans:[…]}
-
-note right of PySdk
-  All spans use the OpenTelemetry
-  GenAI semantic conventions —
-  the seam that makes AgentAid
-  framework-agnostic.
-end note
+Sdk --> Ingest : HTTP POST  {spans: [ ... ]}
 
 @enduml
