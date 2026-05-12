@@ -11,62 +11,74 @@ skinparam defaultFontSize 15
 skinparam packageFontSize 17
 skinparam packageFontStyle bold
 skinparam noteFontSize 13
-skinparam nodesep 70
-skinparam ranksep 90
+skinparam nodesep 40
+skinparam ranksep 80
 skinparam padding 8
 
 title AgentAid — System Architecture
 
-' High-level overview. Per-layer detail diagrams live alongside this one:
+' Stacked view. Layers stack top-to-bottom; data flows upward
+' (agent → SDK → server → frontend). Intra-layer wiring lives in
+' the per-layer diagrams:
 '   • docs/diagrams/agent-sdk-layer.png
 '   • docs/diagrams/server-layer.png
 '   • docs/diagrams/frontend-layer.png
 
-left to right direction
-
-' ───────────────────────────────────────────────────────────────────
-' Agent + SDK Layer
-' ───────────────────────────────────────────────────────────────────
-package "Agent + SDK Layer" #f4f8ff {
-  [Reference Agent\n\n• Pydantic AI\n• planner + worker\n• multi-modal vision\n• mock arXiv default,\n  real arXiv feature-flagged] as Agent
-  [Bare Anthropic\nSDK Example\n\nframework-agnostic\nproof point] as Bare
-  component "agentaid SDK\n(Python + TypeScript)\n\nOTel/GenAI emitter" as Sdk
-
-  Agent --> Sdk : emit\notel/genai spans
-  Bare  --> Sdk : manual\notel/genai
-}
-
-' ───────────────────────────────────────────────────────────────────
-' Server Layer  (FastAPI + SQLModel async)
-' ───────────────────────────────────────────────────────────────────
-package "Server Layer  (FastAPI + SQLModel async)" #fff5e8 {
-  [Ingest\n/ingest] as Ingest
-  database "SQLite" as DB
-  [Eval Orchestrator\n(modes 1 + 3)] as EvalOrch
-  [Regression Driver\n(mode 2)] as RegOrch
-  [Drift Workers\nADWIN · MMD · PSI\n+ Attribution-PSI] as Drift
-  [REST API\n/runs · /evals · /drift\n/datasets · /regressions\n/compare] as Api
-
-  Ingest   --> DB : write spans + run
-  Ingest   ..> EvalOrch : background tasks\nper terminated run
-  EvalOrch --> DB : write\nEvalResult
-  RegOrch  --> DB : write\nRegressionRun
-  Drift    --> DB : poll evals + spans (5 s)\nwrite DriftStateRow
-  Api      <-- DB
-}
-
-' ───────────────────────────────────────────────────────────────────
-' Frontend  (per-route detail lives in frontend-layer.png)
-' ───────────────────────────────────────────────────────────────────
+' ─────────────────────────── TOP: Frontend Layer ──────────────────────────
 package "Frontend Layer" #f3fff3 {
-  [SPA\n\n• React 19 + Vite + TypeScript\n• TanStack Query (typed REST client)\n• Recharts (drift series, score deltas)\n• Routes: drift home, trace detail (Gantt),\n  run comparison, drift detail × 3,\n  eval results, datasets, run list] as Spa
+  [Routes (React Router)\n\n• / — drift home\n• /runs/:id — trace detail (Gantt)\n• /compare — run comparison\n• /drift/:signal × 4\n• /evals · /datasets · /runs] as Routes
+  [React 19 + Vite + TS\n\n• strict TypeScript\n• fast HMR for dashboard iteration\n• one component per route\n• holds page state + layout] as Components
+  [TanStack Query\n\n• typed REST hooks per endpoint\n• polled refresh + cache + retry\n• decodes JSON → typed models] as Query
+  [Recharts\n\n• drift time-series (line)\n• score-delta bars\n• tool-call PSI charts] as Charts
+
+  ' Intra-layer flow (read left → right):
+  '   1. React Router mounts the Component that matches the URL.
+  '   2. The Component calls a typed TanStack Query hook.
+  '   3. The Component hands the fetched data to Recharts.
+  '   Query → REST API is the seam crossing into the Server tier.
+  Routes     -right-> Components : route\nmounts
+  Components -right-> Query      : useQuery(...)
+  Query      -right-> Charts     : data → render
 }
 
-' ───────────────────────────────────────────────────────────────────
-' Cross-layer wiring
-' ───────────────────────────────────────────────────────────────────
-Sdk     --> Ingest : HTTP POST  /ingest\n{spans: [ … ]}
-RegOrch --> Agent  : drive dataset rows\n(regression mode)
-Spa     --> Api    : typed REST client\n(GET /runs · /evals\n /drift · /compare · …)
+' ───────────── MIDDLE: Server Layer  (FastAPI + SQLModel async) ──────────
+package "Server Layer  (FastAPI + SQLModel async)" #fff5e8 {
+  [Ingest  /ingest\n\n• accepts span batches from any SDK\n• writes Run + Span rows\n• schedules background eval tasks] as Ingest
+  [Eval Orchestrator (modes 1 + 3)\n\n• Mode 1: LLM-judge per terminated run\n• Mode 3: trace-invariant checks\n• writes typed EvalResult] as EvalOrch
+  [Regression Driver (mode 2)\n\n• replays golden dataset against\n  current prompt + model\n• writes RegressionRun row per pass] as RegOrch
+  [Drift Workers\n\n• 5 s tick over recent DB rows\n• ADWIN — quality (judge scores)\n• MMD — input (query embeddings)\n• PSI — tool-call frequencies per role\n• PSI — citation-weight attribution\n• writes DriftStateRow per signal] as Drift
+  database "SQLite\n\n• runs, spans, evals,\n  drift state\n• append-only span store" as DB
+  [REST API\n\n• /runs · /evals · /drift\n• /datasets · /regressions · /compare\n• typed read-mostly views of DB] as Api
+
+  ' Force one horizontal row inside the server layer
+  Ingest   -[hidden]right- EvalOrch
+  EvalOrch -[hidden]right- RegOrch
+  RegOrch  -[hidden]right- Drift
+  Drift    -[hidden]right- DB
+  DB       -[hidden]right- Api
+}
+
+' ─────────────────── BOTTOM: Agent + SDK Layer ───────────────────────────
+package "Agent + SDK Layer" #f4f8ff {
+  [Reference Agent\n\n• Pydantic AI — typed agent + tools, async\n• planner + worker — supervisor dispatches\n  one worker subagent per paper\n• multi-modal vision — figures sent as\n  base64 JPEGs to the model\n• mock arXiv default — offline corpus;\n  real arXiv via env flag] as Agent
+  component "agentaid SDK (Python + TypeScript)\n\n• OTel/GenAI emitter — gen_ai.* +\n  agentaid.* span attributes\n• Python + TS parity — same wire format,\n  one server contract" as Sdk
+  [Bare Anthropic SDK Example\n\n• same OTel/GenAI wire, no framework\n  — proves the platform is\n  framework-agnostic] as Bare
+
+  ' Force one horizontal row inside the agent layer
+  Agent -[hidden]right- Sdk
+  Sdk   -[hidden]right- Bare
+}
+
+' ─────────────────── Cross-layer seams (the stack joints) ────────────────
+' Only the cross-layer arrows are drawn at the master level. The intra-layer
+' wiring (Ingest → DB, Drift → DB, etc.) is shown in server-layer.puml.
+Query -down-> Api  : typed REST client\n(GET /runs · /evals\n /drift · /compare · …)
+Sdk -up->   Ingest : HTTP POST /ingest\n{spans: [ … ]}
+
+note bottom of Sdk
+  Regression mode (mode 2) loops the
+  reference agent through the same
+  /ingest path as production traffic.
+end note
 
 @enduml
