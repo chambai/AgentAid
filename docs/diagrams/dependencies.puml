@@ -4,8 +4,8 @@ skinparam backgroundColor white
 skinparam componentStyle rectangle
 skinparam dpi 130
 skinparam defaultFontName Helvetica
-skinparam defaultFontSize 13
-skinparam packageFontSize 15
+skinparam defaultFontSize 12
+skinparam packageFontSize 14
 skinparam packageFontStyle bold
 skinparam ArrowColor #555555
 skinparam componentBackgroundColor #ffffff
@@ -31,27 +31,30 @@ package "External" #f9f9f9 {
 package "Platform  (packages/)" #f4f8ff {
 
   package "agentaid-py" #ddeeff {
-    [OTel exporter\n(span serialiser)] as PyExporter
-    [Eval framework\n(registry · decorator · judges)] as PyEval
-    [Drift detectors\n(ADWIN · MMD · PSI)] as PyDrift
+    [OTel exporter\n\notel/exporter.py\notel/setup.py\notel/conventions.py\notel/redactor.py] as PyExporter
+    [Eval framework\n\neval/judge.py\neval/registry.py\neval/decorator.py\neval/templates/relevance_judge.py\neval/templates/faithfulness_judge.py\neval/templates/cost_within_budget.py\neval/templates/structural_completeness.py] as PyEval
+    [Drift detectors\n\ndrift/adwin.py\ndrift/mmd.py\ndrift/psi.py\ndrift/protocol.py] as PyDrift
+    [Shared models\n\nmodels.py] as PyModels
   }
 
   package "agentaid-ts" #ddeeff {
-    [OTel exporter\n(Node.js span serialiser)] as TsExporter
-    [Eval define\n(typed eval spec)] as TsEval
-    [Invariant checks] as TsInvariant
+    [OTel exporter\n\notel/exporter.ts\notel/conventions.ts] as TsExporter
+    [Eval define\n\neval/define.ts\neval/models.ts] as TsEval
+    [Invariant checks\n\neval/invariants.ts] as TsInvariant
   }
 
   package "agentaid-server" #ffe8cc {
-    [Ingest endpoint\n(/ingest)] as Server
-    [Eval orchestrator\n(modes 1 + 2 + 3)] as EvalOrch
-    [Drift workers\n(5 s tick)] as DriftW
-    [REST API\n(/runs · /drift · /evals …)] as RestAPI
-    [SQLite store] as DB
+    [Ingest endpoint\n\napi/ingest.py\ningestion/parser.py] as Server
+    [Eval orchestrator\n\norchestrator/eval_runner.py] as EvalOrch
+    [Drift workers\n\norchestrator/drift_workers.py] as DriftW
+    [Regression driver\n\norchestrator/regression.py] as RegDriver
+    [REST API\n\napi/runs.py · api/drift.py\napi/evals.py · api/compare.py\napi/datasets.py · api/digests.py\napi/figures.py · api/regression.py] as RestAPI
+    [SQLite store\n\ndb/models.py\ndb/engine.py] as DB
+    [App entry\n\nmain.py\nconfig.py] as Main
   }
 
   package "agentaid-web" #e8f5e8 {
-    [Platform SPA\n(engineers · on-call)] as PlatformUI
+    [Platform SPA\n\napi/client.ts · api/types.ts\nroutes/DriftHome.tsx\nroutes/DriftDetail.tsx\nroutes/TraceDetail.tsx\nroutes/RunComparison.tsx\nroutes/EvalResults.tsx\nroutes/Datasets.tsx\ncomponents/GanttChart.tsx\ncomponents/RunRow.tsx] as PlatformUI
   }
 }
 
@@ -59,17 +62,17 @@ package "Platform  (packages/)" #f4f8ff {
 package "Apps  (apps/)" #fff8e8 {
 
   package "reference-agent" #fff0cc {
-    [Planner agent\n(Pydantic AI)] as Planner
-    [Worker agent\n(Pydantic AI)] as Worker
-    [arXiv tools\n(mock | real)] as ArxivTools
+    [Planner agent\n\nplanner.py\n__main__.py] as Planner
+    [Worker agent\n\nworker.py] as Worker
+    [arXiv tools\n\ntools.py · llm.py\nmock_arxiv/client.py\nmock_arxiv/mock.py\nmock_arxiv/real.py] as ArxivTools
   }
 
   package "arxiv-digest-web" #e8f5e8 {
-    [Consumer SPA\n(researchers)] as DigestUI
+    [Consumer SPA\n\napi/client.ts · api/types.ts\nroutes/DigestList.tsx\nroutes/DigestView.tsx] as DigestUI
   }
 
   package "bare-sdk-example" #fff0cc {
-    [Bare Anthropic\nagent example] as BareAgent
+    [Bare Anthropic\nagent example\n\nexample.py] as BareAgent
   }
 }
 
@@ -78,6 +81,8 @@ PyExporter --> OTel
 PyExporter --> Anthropic
 PyDrift    --> SciPy
 PyEval     --> Anthropic
+PyExporter --> PyModels
+PyEval     --> PyModels
 
 ' ─────── agentaid-ts internal deps ─────────────────────────
 TsExporter --> OTel
@@ -85,13 +90,18 @@ TsExporter --> Zod
 TsEval     --> Zod
 
 ' ─────── agentaid-server deps ──────────────────────────────
-Server    --> PyExporter : imports agentaid-py
+Server    --> PyExporter : agentaid-py
 EvalOrch  --> PyEval
 DriftW    --> PyDrift
-RestAPI   --> DB
 Server    --> FastAPI
 EvalOrch  --> FastAPI
 RestAPI   --> FastAPI
+RestAPI   --> DB
+Server    --> DB
+EvalOrch  --> DB
+DriftW    --> DB
+Main      --> Server
+Main      --> DriftW
 
 ' ─────── agentaid-web deps ─────────────────────────────────
 PlatformUI --> ReactVite
@@ -99,13 +109,13 @@ PlatformUI --> TanStack
 PlatformUI --> RestAPI : REST calls
 
 ' ─────── reference-agent deps ──────────────────────────────
-Planner --> PyExporter : agentaid-py
-Planner --> PydanticAI
-Planner --> Anthropic
-Worker  --> PydanticAI
-Worker  --> Anthropic
-Planner --> ArxivTools
-Worker  --> ArxivTools
+Planner    --> PyExporter : agentaid-py
+Planner    --> PydanticAI
+Planner    --> Anthropic
+Worker     --> PydanticAI
+Worker     --> Anthropic
+Planner    --> ArxivTools
+Worker     --> ArxivTools
 ArxivTools --> Anthropic : llm.vision / llm.text
 
 ' ─────── arxiv-digest-web deps ──────────────────────────────
