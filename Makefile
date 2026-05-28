@@ -28,7 +28,7 @@ lint:
 	pnpm -r lint
 
 typecheck:
-	uv run mypy packages/agentaid-py/src packages/agentaid-server/src packages/reference-agent/src
+	uv run mypy packages/agentaid-py/src packages/agentaid-server/src apps/reference-agent/src
 	pnpm -r typecheck
 
 clean:

@@ -2,4 +2,4 @@
 packages:
   - "packages/agentaid-ts"
   - "packages/agentaid-web"
-  - "packages/arxiv-digest-web"
+  - "apps/arxiv-digest-web"

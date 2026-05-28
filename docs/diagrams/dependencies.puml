@@ -1,0 +1,120 @@
+@startuml dependencies
+!theme plain
+skinparam backgroundColor white
+skinparam componentStyle rectangle
+skinparam dpi 130
+skinparam defaultFontName Helvetica
+skinparam defaultFontSize 13
+skinparam packageFontSize 15
+skinparam packageFontStyle bold
+skinparam ArrowColor #555555
+skinparam componentBackgroundColor #ffffff
+skinparam nodesep 40
+skinparam ranksep 60
+skinparam padding 6
+
+title AgentAid — Package Dependency Graph
+
+' ─────────────────── External libraries ────────────────────
+package "External" #f9f9f9 {
+  [OpenTelemetry\nAPI + SDK] as OTel
+  [Anthropic SDK\n(Python + TS)] as Anthropic
+  [Pydantic / Pydantic AI] as PydanticAI
+  [FastAPI + SQLModel\n+ aiosqlite] as FastAPI
+  [React 19 + Vite\n+ TypeScript] as ReactVite
+  [TanStack Query\n+ Recharts] as TanStack
+  [NumPy + SciPy] as SciPy
+  [Zod] as Zod
+}
+
+' ─────────────────── Platform packages ─────────────────────
+package "Platform  (packages/)" #f4f8ff {
+
+  package "agentaid-py" #ddeeff {
+    [OTel exporter\n(span serialiser)] as PyExporter
+    [Eval framework\n(registry · decorator · judges)] as PyEval
+    [Drift detectors\n(ADWIN · MMD · PSI)] as PyDrift
+  }
+
+  package "agentaid-ts" #ddeeff {
+    [OTel exporter\n(Node.js span serialiser)] as TsExporter
+    [Eval define\n(typed eval spec)] as TsEval
+    [Invariant checks] as TsInvariant
+  }
+
+  package "agentaid-server" #ffe8cc {
+    [Ingest endpoint\n(/ingest)] as Server
+    [Eval orchestrator\n(modes 1 + 2 + 3)] as EvalOrch
+    [Drift workers\n(5 s tick)] as DriftW
+    [REST API\n(/runs · /drift · /evals …)] as RestAPI
+    [SQLite store] as DB
+  }
+
+  package "agentaid-web" #e8f5e8 {
+    [Platform SPA\n(engineers · on-call)] as PlatformUI
+  }
+}
+
+' ─────────────────── Application packages ───────────────────
+package "Apps  (apps/)" #fff8e8 {
+
+  package "reference-agent" #fff0cc {
+    [Planner agent\n(Pydantic AI)] as Planner
+    [Worker agent\n(Pydantic AI)] as Worker
+    [arXiv tools\n(mock | real)] as ArxivTools
+  }
+
+  package "arxiv-digest-web" #e8f5e8 {
+    [Consumer SPA\n(researchers)] as DigestUI
+  }
+
+  package "bare-sdk-example" #fff0cc {
+    [Bare Anthropic\nagent example] as BareAgent
+  }
+}
+
+' ─────── agentaid-py internal deps ─────────────────────────
+PyExporter --> OTel
+PyExporter --> Anthropic
+PyDrift    --> SciPy
+PyEval     --> Anthropic
+
+' ─────── agentaid-ts internal deps ─────────────────────────
+TsExporter --> OTel
+TsExporter --> Zod
+TsEval     --> Zod
+
+' ─────── agentaid-server deps ──────────────────────────────
+Server    --> PyExporter : imports agentaid-py
+EvalOrch  --> PyEval
+DriftW    --> PyDrift
+RestAPI   --> DB
+Server    --> FastAPI
+EvalOrch  --> FastAPI
+RestAPI   --> FastAPI
+
+' ─────── agentaid-web deps ─────────────────────────────────
+PlatformUI --> ReactVite
+PlatformUI --> TanStack
+PlatformUI --> RestAPI : REST calls
+
+' ─────── reference-agent deps ──────────────────────────────
+Planner --> PyExporter : agentaid-py
+Planner --> PydanticAI
+Planner --> Anthropic
+Worker  --> PydanticAI
+Worker  --> Anthropic
+Planner --> ArxivTools
+Worker  --> ArxivTools
+ArxivTools --> Anthropic : llm.vision / llm.text
+
+' ─────── arxiv-digest-web deps ──────────────────────────────
+DigestUI --> ReactVite
+DigestUI --> RestAPI : REST calls
+
+' ─────── bare-sdk-example deps ──────────────────────────────
+BareAgent --> PyExporter : agentaid-py
+BareAgent --> Anthropic
+BareAgent --> OTel
+
+@enduml

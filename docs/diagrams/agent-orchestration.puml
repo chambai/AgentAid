@@ -1,0 +1,116 @@
+@startuml agent-orchestration
+!theme plain
+skinparam backgroundColor white
+skinparam dpi 130
+skinparam defaultFontName Helvetica
+skinparam defaultFontSize 13
+skinparam noteFontSize 11
+skinparam noteBackgroundColor #fffae6
+skinparam sequenceArrowThickness 1.2
+skinparam sequenceParticipantBorderColor #444444
+skinparam sequenceLifeLineBorderColor #888888
+skinparam sequenceGroupBackgroundColor #f6f8ff
+skinparam sequenceGroupBorderColor #6677aa
+skinparam sequenceReferenceBackgroundColor #f6f8ff
+
+title AgentAid — Planner / Worker Agent Orchestration\n(tools · interactions · async + concurrency)
+
+actor      "CLI / digests API\n__main__.py"                        as User
+participant "Planner Agent\nPydantic AI · role=planner\nsonnet-4-6" as Planner
+participant "Worker Agent\nPydantic AI · role=worker\nsonnet-4-6"   as Worker
+participant "tools.py\n(plain async functions)"                     as Tools
+participant "Anthropic API\nllm.text · llm.vision · llm.json_call"  as LLM
+database    "arXiv client\nmock (default) | real (env flag)"        as Arxiv
+queue       "Run-scoped side-channels\n_RUN_FIGURES · figures_ctx"  as Side
+
+User -> Planner ++ : await agent.run(user_prompt, deps=PlannerInput)
+note right of Planner
+  Single OTel root span for the whole run.
+  Every @agent.tool call below becomes a
+  child span via the GenAI integration in
+  agentaid.otel.
+end note
+
+== Stage 1 — Candidate selection (sequential awaits) ==
+
+loop planner LLM tool-use loop (planner.md system prompt)
+  Planner -> LLM : messages.create(\n  tools=[search_arxiv, fetch_metadata,\n         score_candidate, dispatch_worker,\n         compose_digest])
+  LLM --> Planner : tool_calls
+
+  alt search_arxiv
+    Planner -> Tools : await search_arxiv(q, limit, date_from, date_to)
+    Tools -> Arxiv : client.search(...)
+    Arxiv --> Tools : list[PaperSummary]
+    Tools --> Planner : rows
+  else fetch_metadata
+    Planner -> Tools : await fetch_metadata(paper_id)
+    Tools -> Arxiv : client.fetch_metadata(...)
+    Arxiv --> Tools : PaperSummary
+    Tools --> Planner : meta
+  else score_candidate
+    Planner -> Tools : await score_candidate(meta_id, interest)
+    Tools -> LLM : llm.json_call(scoring prompt)
+    LLM --> Tools : {score, rationale}
+    Tools --> Planner : CandidateScore
+  end
+end
+
+== Stage 2 — Per-paper deep read (fan-out: the concurrency point) ==
+
+note over Planner, Worker
+  The planner LLM emits **N dispatch_worker tool calls** in one
+  assistant turn (Anthropic parallel tool use). Pydantic AI awaits
+  them with **asyncio.gather** — N worker agents run in parallel,
+  each with its own nested LLM-tool loop and its own OTel span tree.
+end note
+
+par
+  Planner -> Worker ++ : dispatch_worker(p1)\nawait worker.run(prompt, WorkerInput(p1))
+  Worker -> Tools : await fetch_paper(p1)
+  Tools -> Arxiv : client.fetch_paper(p1)
+  Arxiv --> Tools : Paper.body
+  Tools --> Worker : body
+  Worker -> Tools : await extract_figures(p1)
+  loop per figure (sequential await)
+    Tools -> LLM : llm.vision(image_bytes,\n"Describe what this figure shows")
+    LLM --> Tools : description
+  end
+  Tools -> Side : _RUN_FIGURES[p1] = [...]
+  Tools --> Worker : list[FigureDescription]
+  Worker -> Tools : await summarize(p1, focus)
+  Tools -> LLM : llm.text(sonnet, max=600)
+  LLM --> Tools : bullets
+  Tools --> Worker : Summary
+  Worker --> Planner -- : WorkerResult
+  Planner -> Side : figures_ctx[p1] = [...]\n(captured inside dispatch_worker tool)
+else
+  Planner -> Worker ++ : dispatch_worker(p2)\nawait worker.run(prompt, WorkerInput(p2))
+  note over Worker : same tool sequence as p1\n(fetch_paper → extract_figures →\n summarize)
+  Worker --> Planner -- : WorkerResult
+else
+  Planner -> Worker ++ : dispatch_worker(pN)\nawait worker.run(prompt, WorkerInput(pN))
+  note over Worker : same tool sequence as p1\n(fetch_paper → extract_figures →\n summarize)
+  Worker --> Planner -- : WorkerResult
+end
+
+== Stage 3 — Digest synthesis (single await) ==
+
+Planner -> Tools : await compose_digest(sections, interest)
+Tools -> LLM : llm.text(sonnet, max=2000)
+LLM --> Tools : Markdown digest
+Tools --> Planner : digest
+
+Planner --> User -- : PlannerResult\n{digest, candidates, sections, figures}
+
+== Stage 4 — Post-run merge & OTel emit ==
+
+note over User, Side
+  __main__.py merges figures from three sources in **increasing-trust** order:
+  PlannerResult.figures  →  figures_ctx  →  _RUN_FIGURES (deterministic, wins).
+  Then computes citation-weight attribution from section lengths and emits
+  everything as OTel attributes on the root span:
+  **agentaid.input · agentaid.output · agentaid.attribution · gen_ai.\***
+  …which the agentaid SDK exports to the server's /ingest endpoint.
+end note
+
+@enduml

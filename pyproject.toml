@@ -4,7 +4,7 @@ version = "0.0.0"
 requires-python = ">=3.12"
 
 [tool.uv.workspace]
-members = ["packages/agentaid-py", "packages/agentaid-server", "packages/reference-agent", "packages/bare-sdk-example"]
+members = ["packages/agentaid-py", "packages/agentaid-server", "apps/reference-agent", "apps/bare-sdk-example"]
 
 [tool.uv]
 dev-dependencies = [

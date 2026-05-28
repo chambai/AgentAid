@@ -138,13 +138,14 @@ need to change, with rough effort estimates.
 
 ```
 agentaid/
-├── packages/
+├── packages/                # AgentAid platform (reusable across agents)
 │   ├── agentaid-py/         # Python SDK: otel exporter, eval framework, drift detectors
 │   ├── agentaid-ts/         # TypeScript SDK: otel exporter, eval define, invariants
 │   ├── agentaid-server/     # FastAPI server: ingestion, evals, drift workers, regression
-│   ├── agentaid-web/        # Vite + React + TS — platform UI (engineers)
-│   ├── arxiv-digest-web/    # Vite + React + TS — consumer UI (researchers)
+│   └── agentaid-web/        # Vite + React + TS — platform UI (engineers)
+├── apps/                    # Applications built on the platform
 │   ├── reference-agent/     # Pydantic AI arXiv agent + mock arXiv layer
+│   ├── arxiv-digest-web/    # Vite + React + TS — consumer UI (researchers)
 │   └── bare-sdk-example/    # Bare Anthropic SDK + manual otel — framework-agnostic proof
 ├── eval/golden/             # 10-row curated dataset for Mode 2 regression
 ├── scripts/

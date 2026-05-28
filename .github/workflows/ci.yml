@@ -23,7 +23,7 @@ jobs:
           uv run mypy \
             packages/agentaid-py/src \
             packages/agentaid-server/src \
-            packages/reference-agent/src \
+            apps/reference-agent/src \
             || echo "::warning::mypy errors — non-blocking for portfolio scope"
       - name: Tests
         run: uv run pytest -m "not live" --maxfail=5
